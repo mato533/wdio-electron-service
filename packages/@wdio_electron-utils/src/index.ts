@@ -17,6 +17,7 @@ import type {
   ForgeBuildInfo,
   BuilderBuildInfo,
 } from '@wdio/electron-types';
+import { findBuilderConfig } from './config.js';
 
 const SupportedPlatform = {
   darwin: 'darwin',
@@ -181,12 +182,15 @@ export async function getAppBuildInfo(pkg: NormalizedReadResult): Promise<AppBui
 
   if (builderDependencyDetected && !builderConfig) {
     // if builder config is not found in the package.json, we attempt to read `electron-builder.json`
-    const builderConfigFileName = 'electron-builder.json';
-    const builderConfigPath = path.join(rootDir, builderConfigFileName);
     try {
-      log.info(`Reading Builder config file: ${builderConfigPath}...`);
-      const data = await fs.readFile(builderConfigPath, 'utf-8');
-      builderConfig = JSON.parse(data);
+      log.info(`Finding Builder config file...`);
+      const configRequest = { configFilename: 'electron-builder', projectDir: rootDir };
+      const config = await findBuilderConfig<BuilderConfig>(configRequest);
+      if (!!config && !!config.configFile) {
+        builderConfig = config.result;
+      } else {
+        throw new Error('NOT_FOUND');
+      }
     } catch (_e) {
       log.warn('Builder config file not found or invalid.');
     }
