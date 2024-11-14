@@ -571,7 +571,7 @@ describe('getAppBuildInfo', () => {
     assert.deepEqual(accessedFilenames.sort(), expected.sort());
   });
 
-  it.only.each([
+  it.each([
     ['inline', 'inline'],
     ['JSON', 'json'],
     ['JSON5', 'json5'],

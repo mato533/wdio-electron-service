@@ -40,8 +40,8 @@ async function readConfig(configFile: string, projectDir: string) {
 
   if (extRegex.js.test(ext)) {
     const { tsImport } = await import('tsx/esm/api');
-    console.log(`path: ${configFilePath}`)
-    console.log(`url : ${import.meta.url}`)
+    console.log(`path: ${configFilePath}`);
+    console.log(`url : ${import.meta.url}`);
     const readResult = (await tsImport(configFilePath, import.meta.url)).default;
 
     if (typeof readResult === 'function') {
@@ -69,7 +69,7 @@ async function getConfig(fileCandidate: string[], projectDir: string) {
       log.debug(`Attempting to read config file: ${configFile}...`);
       return await readConfig(configFile, projectDir);
     } catch (_e) {
-      console.log(_e.message)
+      console.log((_e as Error).message);
       log.debug('unsuccessful');
     }
   }
