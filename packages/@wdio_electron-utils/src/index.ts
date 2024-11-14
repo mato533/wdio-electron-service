@@ -42,7 +42,8 @@ async function readConfig(configFile: string, projectDir: string) {
     const { tsImport } = await import('tsx/esm/api');
     console.log(`path: ${configFilePath}`);
     console.log(`url : ${import.meta.url}`);
-    const readResult = (await tsImport(configFilePath, import.meta.url)).default;
+    const url = pathToFileURL(configFilePath).toString();
+    const readResult = (await tsImport(url, import.meta.url)).default;
 
     if (typeof readResult === 'function') {
       result = readResult();
