@@ -3,30 +3,40 @@ import type { Options } from '@wdio/types';
 
 import ElectronWorkerService from './service.js';
 import ElectronLaunchService from './launcher.js';
-import { CUSTOM_CAPABILITY_NAME } from './constants.js';
+import { CUSTOM_CAPABILITY_NAME, WDIO_CHROMEDRIVER_OPTIONS, GOOG_CHROME_OPTIONS } from './constants.js';
 import log from '@wdio/electron-utils/log';
-import type { ElectronServiceOptions } from '@wdio/electron-types';
 
-export async function init(opts: ElectronServiceOptions) {
-  const testRunnerOpts = opts as Options.Testrunner;
-  let capabilities = {
+export async function init(capabilities: WebdriverIO.Capabilities, options?: Options.Testrunner) {
+  const testRunnerOpts = options || ({} as Options.Testrunner);
+
+  const serviceOpts = capabilities[CUSTOM_CAPABILITY_NAME] || {};
+  const ChromeOpts = capabilities[GOOG_CHROME_OPTIONS] || {};
+  const ChromeDriver = capabilities[WDIO_CHROMEDRIVER_OPTIONS] || {};
+
+  let resolvedCapabilities = {
     browserName: 'electron',
-    [CUSTOM_CAPABILITY_NAME]: opts,
+    [CUSTOM_CAPABILITY_NAME]: serviceOpts,
+    [WDIO_CHROMEDRIVER_OPTIONS]: ChromeDriver,
+    [GOOG_CHROME_OPTIONS]: ChromeOpts,
   };
 
-  const launcher = new ElectronLaunchService(opts, capabilities, testRunnerOpts);
-  const service = new ElectronWorkerService(opts);
+  const launcher = new ElectronLaunchService(
+    resolvedCapabilities[CUSTOM_CAPABILITY_NAME],
+    resolvedCapabilities,
+    testRunnerOpts,
+  );
+  const service = new ElectronWorkerService(resolvedCapabilities[CUSTOM_CAPABILITY_NAME]);
 
-  await launcher.onPrepare(testRunnerOpts, [capabilities]);
+  await launcher.onPrepare(testRunnerOpts, [resolvedCapabilities]);
 
-  log.debug('Session capabilities:', capabilities);
+  log.debug('Session capabilities:', resolvedCapabilities);
 
   // initialise session
   const browser = await remote({
-    capabilities,
+    capabilities: resolvedCapabilities,
   });
 
-  await service.before(capabilities, [], browser);
+  await service.before(resolvedCapabilities, [], browser);
 
   return browser;
 }
