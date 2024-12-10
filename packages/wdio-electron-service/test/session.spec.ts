@@ -1,4 +1,4 @@
-import { describe, it, vi, expect } from 'vitest';
+import { describe, it, vi, expect, beforeEach } from 'vitest';
 
 import { init } from '../src/session.js';
 
@@ -25,35 +25,56 @@ vi.mock('../src/launcher.js', () => ({
 vi.mock('webdriverio', () => ({ remote: async () => Promise.resolve(browserMock) }));
 
 describe('init', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('should create a new browser session', async () => {
     const session = await init({});
     expect(session).toStrictEqual(browserMock);
   });
 
   it('should call onPrepare with the expected parameters', async () => {
-    await init({ appBinaryPath: '/path/to/binary' });
-    expect(onPrepareMock).toHaveBeenCalledWith(
-      {
+    await init({
+      'wdio:electronServiceOptions': {
         appBinaryPath: '/path/to/binary',
       },
-      [
-        {
-          'browserName': 'electron',
-          'wdio:electronServiceOptions': {
-            appBinaryPath: '/path/to/binary',
-          },
+    });
+    expect(onPrepareMock).toHaveBeenCalledWith({}, [
+      {
+        'browserName': 'electron',
+        'wdio:electronServiceOptions': {
+          appBinaryPath: '/path/to/binary',
         },
-      ],
-    );
+        'goog:chromeOptions': {},
+        'wdio:chromedriverOptions': {},
+      },
+    ]);
   });
 
   it('should call before with the expected parameters', async () => {
-    await init({ appBinaryPath: '/path/to/binary' });
+    await init({
+      'wdio:electronServiceOptions': {
+        appBinaryPath: '/path/to/binary',
+      },
+      'goog:chromeOptions': {
+        args: ['--disable-dev-shm-usage', '--disable-gpu', '--headless'],
+      },
+      'wdio:chromedriverOptions': {
+        binary: '/path/to/chromdriver',
+      },
+    });
     expect(beforeMock).toHaveBeenCalledWith(
       {
         'browserName': 'electron',
         'wdio:electronServiceOptions': {
           appBinaryPath: '/path/to/binary',
+        },
+        'goog:chromeOptions': {
+          args: ['--disable-dev-shm-usage', '--disable-gpu', '--headless'],
+        },
+        'wdio:chromedriverOptions': {
+          binary: '/path/to/chromdriver',
         },
       },
       [],

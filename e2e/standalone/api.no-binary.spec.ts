@@ -19,8 +19,7 @@ const appEntryPoint = path.join(__dirname, '..', '..', 'apps', exampleDir, 'dist
 const electronVersion = getElectronVersion(pkg);
 
 const browser = await startElectron({
-  appEntryPoint,
-  appArgs: ['foo', 'bar=baz'],
+  'wdio:electronServiceOptions': { appEntryPoint, appArgs: ['foo', 'bar=baz'] },
 });
 
 const appName = await browser.electron.execute((electron) => electron.app.getName());

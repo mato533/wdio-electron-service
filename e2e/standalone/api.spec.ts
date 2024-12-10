@@ -20,8 +20,7 @@ const appBuildInfo = await getAppBuildInfo(pkg);
 const appBinaryPath = await getBinaryPath(packageJsonPath, appBuildInfo, electronVersion);
 
 const browser = await startElectron({
-  appBinaryPath,
-  appArgs: ['foo', 'bar=baz'],
+  'wdio:electronServiceOptions': { appBinaryPath, appArgs: ['foo', 'bar=baz'] },
 });
 
 const appName = await browser.electron.execute((electron) => electron.app.getName());
