@@ -8,8 +8,10 @@ The `startElectron` method accepts [`ElectronServiceOptions`](./configuration/se
 import { startElectron } from 'wdio-electron-service';
 
 const browser = await startElectron({
-  appBinaryPath: '/path/to/binary',
-  appArgs: ['foo', 'bar=baz'],
+  'wdio:electronServiceOptions': {
+    appBinaryPath: '/path/to/binary',
+    appArgs: ['foo', 'bar=baz'],
+  },
 });
 
 const appName = await browser.electron.execute((electron) => electron.app.getName());
