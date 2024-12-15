@@ -4,10 +4,6 @@ name: Manual Release Publish
 on:
   workflow_dispatch:
     inputs:
-      npmTag:
-        description: 'NPM tag. Defaults to "latest".'
-        required: true
-        default: 'latest'
       releaseVersion:
         description: 'The new version to create.'
         required: true
@@ -24,9 +20,8 @@ on:
         type: boolean
 
 env:
-  DRY_RUN_ARG: ${{ inputs.dryRun && '--dry-run' || '' }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-  HUSKY: '0'
 
 jobs:
   release:
@@ -34,6 +29,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ssh-key: ${{ secrets.DEPLOY_KEY }}
           ref: 'main'
           fetch-depth: 0
       - uses: actions/setup-node@v4
@@ -51,18 +47,42 @@ jobs:
         run: |
           git config --global user.email "bot@webdriver.io"
           git config --global user.name "WebdriverIO Release Bot"
-      - name: Pushing to the protected branch 'main'
-        uses: CasperWA/push-protected@v2
-        with:
-          token: ${{ secrets.DEPLOY_PAT }}
-          branch: main
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
       - name: Build
         run: pnpm build
-      - name: Release
+      - name: Create Release and Tags
+        shell: bash
+        run: pnpm turbo-version -b ${{ inputs.releaseVersion }}
+      - name: Publish to NPM
+        shell: bash
+        run: pnpx tsx scripts/publish.ts --tag latest ${{ inputs.dryRun && '--dry-run' || '' }}
+      - name: Log git changes
+        if: ${{ inputs.dryRun }}
         run: |
-          pnpx tsx scripts/release.ts ${{inputs.releaseVersion}} $DRY_RUN_ARG --npm.tag=${{inputs.npmTag}}
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          git diff ..origin/main
+          echo "DRY RUN: No changes were made."
+      - name: Push Tags and Commits
+        id: push-tags
+        shell: bash
+        if: ${{ !inputs.dryRun }}
+        run: |
+          echo "Git log:"
+          git log --oneline -n 5
+          # get release tag
+          RELEASE_TAG=$(git describe --tags $(git rev-list --tags --max-count=1))
+          echo "Release tag: $RELEASE_TAG"
+          echo "Pushing tags and commits..."
+          # push tags and commits without running the pre-push hook
+          git push --tags --no-verify && git push --no-verify
+          # pass the release tag to the next step
+          echo "RELEASE_TAG=$RELEASE_TAG" >> $GITHUB_OUTPUT
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          generate_release_notes: true
+          prerelease: false
+          repository: goosewobbler/zutron
+          tag_name: ${{ steps.push-tags.outputs.RELEASE_TAG }}
+          token: $GITHUB_TOKEN

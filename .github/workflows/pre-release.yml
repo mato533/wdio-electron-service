@@ -8,23 +8,16 @@ on:
         description: 'Branch. Defaults to "main".'
         required: true
         default: 'main'
-      npmTag:
-        description: 'NPM tag. Defaults to "next".'
+      prereleaseVersion:
+        description: 'The new prerelease version to create.'
         required: true
-        default: 'next'
-      preReleaseName:
-        description: 'Pre-release name. This is used in the version string, e.g. "beta" for `7.0.0-beta.0`. Defaults to "next".'
-        required: true
-        default: 'next'
-      preReleaseVersion:
-        description: 'The new pre-release version to create. Choose "existing" to increment the latest pre-release.'
-        required: true
+        default: 'prerelease'
         type: choice
         options:
-          - existing
-          - patch
-          - minor
-          - major
+          - prepatch
+          - preminor
+          - premajor
+          - prerelease
       dryRun:
         description: 'Do not touch or write anything. Show the commands.'
         required: true
@@ -32,9 +25,8 @@ on:
         type: boolean
 
 env:
-  DRY_RUN_ARG: ${{ inputs.dryRun && '--dry-run' || '' }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-  HUSKY: '0'
 
 jobs:
   release:
@@ -42,7 +34,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{inputs.branch}}
+          ssh-key: ${{ secrets.DEPLOY_KEY }}
+          ref: ${{ inputs.branch }}
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
@@ -59,22 +52,42 @@ jobs:
         run: |
           git config --global user.email "bot@webdriver.io"
           git config --global user.name "WebdriverIO Release Bot"
-      - name: Pushing to the protected branch 'main'
-        uses: CasperWA/push-protected@v2
-        with:
-          token: ${{ secrets.DEPLOY_PAT }}
-          branch: main
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
       - name: Build
         run: pnpm build
-      - name: Publish Pre-Release
+      - name: Create Release and Tags
+        shell: bash
+        run: pnpm turbo-version -b ${{ inputs.preReleaseVersion }}
+      - name: Publish to NPM
+        shell: bash
+        run: pnpx tsx scripts/publish.ts --tag next ${{ inputs.dryRun && '--dry-run' || '' }}
+      - name: Log git changes
+        if: ${{ inputs.dryRun }}
         run: |
-          if [ "${{inputs.preReleaseVersion}}" == "existing" ]; then
-            pnpx tsx scripts/release.ts $DRY_RUN_ARG --preRelease=${{inputs.preReleaseName}} --npm.tag=${{inputs.npmTag}} --no-git.requireupstream
-          else
-            pnpx tsx scripts/release.ts ${{inputs.preReleaseVersion}} $DRY_RUN_ARG --preRelease=${{inputs.preReleaseName}} --npm.tag=${{inputs.npmTag}} --no-git.requireupstream
-          fi
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          git diff ..origin/main
+          echo "DRY RUN: No changes were made."
+      - name: Push Tags and Commits
+        id: push-tags
+        shell: bash
+        if: ${{ !inputs.dryRun }}
+        run: |
+          echo "Git log:"
+          git log --oneline -n 5
+          # get release tag
+          RELEASE_TAG=$(git describe --tags $(git rev-list --tags --max-count=1))
+          echo "Release tag: $RELEASE_TAG"
+          echo "Pushing tags and commits..."
+          # push tags and commits without running the pre-push hook
+          git push --tags --no-verify && git push --no-verify
+          # pass the release tag to the next step
+          echo "RELEASE_TAG=$RELEASE_TAG" >> $GITHUB_OUTPUT
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          generate_release_notes: true
+          prerelease: true
+          repository: webdriverio-community/wdio-electron-service
+          tag_name: ${{ steps.push-tags.outputs.RELEASE_TAG }}
+          token: $GITHUB_TOKEN
