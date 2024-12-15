@@ -35,6 +35,7 @@
       "./dist/cjs/log.js"
     ]
   },
+  "types": "./dist/index.d.ts",
   "engines": {
     "node": ">=18 || >=20"
   },
@@ -43,8 +44,8 @@
     "clean:dist": "pnpm dlx shx rm -rf ./dist",
     "build": "pnpm build:esm && pnpm build:cjs",
     "build:esm": "tsc --outDir dist",
-    "build:cjs": "pnpm build:cjs:copy && pnpm build:cjs:replace-import && pnpm build:cjs:compile",
-    "build:cjs:compile": "tsc --build tsconfig.cjs.json",
+    "build:cjs": "pnpm build:cjs:compile",
+    "build:cjs:compile": "tsc --project tsconfig.cjs.json --outDir dist/cjs",
     "build:cjs:copy": "cp -f src/*.ts src/cjs",
     "build:cjs:replace-import": "shx sed -i \"s/tsx\\/esm\\/api/tsx\\/cjs\\/api/g\" \"./src/cjs/index.ts\" && shx sed -i \"s/{ tsImport }/{ require: tsImport }/g\" \"./src/cjs/index.ts\"",
     "release": "release-it -VV --ci --npm.skipChecks --no-git.requireCleanWorkingDir",

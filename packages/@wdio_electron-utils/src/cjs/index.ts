@@ -5,7 +5,6 @@ import { pathToFileURL } from 'node:url';
 import { allOfficialArchsForPlatformAndVersion } from '@electron/packager';
 import findVersions from 'find-versions';
 import type { NormalizedReadResult } from 'read-package-up';
-import { tsImport } from 'tsx/esm/api';
 
 import log from './log.js';
 import { APP_NAME_DETECTION_ERROR, BUILD_TOOL_DETECTION_ERROR } from './constants.js';
@@ -18,6 +17,14 @@ import type {
   ForgeBuildInfo,
   BuilderBuildInfo,
 } from '@wdio/electron-types';
+
+// import * as tsImport from "./tsimport.cjs"
+// import { tsImport } from "tsx/esm/api"
+
+// TODO: We shouldn't need this workaround any more but removing it causes compilation failures
+// Workaround for ts-node converting dynamic imports to requires
+// see https://github.com/TypeStrong/ts-node/discussions/1290
+const dynamicImport = new Function('specifier', 'return import(specifier)');
 
 const SupportedPlatform = {
   darwin: 'darwin',
@@ -40,7 +47,8 @@ async function readConfig(configFile: string, projectDir: string) {
   let result: unknown;
 
   if (extRegex.js.test(ext)) {
-    // const { tsImport } = await import('tsx/esm/api');
+    // const { tsImport } = await import('./tsimport');
+    const { default: tsImport } = await dynamicImport('tsx/esm/api');
     const configFilePathUrl = pathToFileURL(configFilePath).toString();
     const readResult = (await tsImport(configFilePathUrl, __filename)).default;
 

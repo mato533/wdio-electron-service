@@ -1,2 +1,2 @@
 # CJS build
-src/cjs/*.ts
+#src/cjs/*.ts

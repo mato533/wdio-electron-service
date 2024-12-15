@@ -453,7 +453,7 @@ importers:
         version: 9.1.3
       debug:
         specifier: ^4.4.0
-        version: 4.4.0(supports-color@8.1.1)
+        version: 4.4.0
       find-versions:
         specifier: ^6.0.0
         version: 6.0.0
@@ -6675,7 +6675,7 @@ snapshots:
     dependencies:
       '@ampproject/remapping': 2.3.0
       '@bcoe/v8-coverage': 0.2.3
-      debug: 4.4.0(supports-color@8.1.1)
+      debug: 4.4.0
       istanbul-lib-coverage: 3.2.2
       istanbul-lib-report: 3.0.1
       istanbul-lib-source-maps: 5.0.6
@@ -6904,7 +6904,7 @@ snapshots:
 
   agent-base@7.1.1:
     dependencies:
-      debug: 4.4.0(supports-color@8.1.1)
+      debug: 4.4.0
     transitivePeerDependencies:
       - supports-color
 
@@ -7600,6 +7600,10 @@ snapshots:
       ms: 2.1.3
 
   debug@4.3.7:
+    dependencies:
+      ms: 2.1.3
+
+  debug@4.4.0:
     dependencies:
       ms: 2.1.3
 
@@ -8305,7 +8309,7 @@ snapshots:
 
   flora-colossus@2.0.0:
     dependencies:
-      debug: 4.4.0(supports-color@8.1.1)
+      debug: 4.4.0
       fs-extra: 10.1.0
     transitivePeerDependencies:
       - supports-color
@@ -8455,7 +8459,7 @@ snapshots:
     dependencies:
       basic-ftp: 5.0.5
       data-uri-to-buffer: 6.0.2
-      debug: 4.4.0(supports-color@8.1.1)
+      debug: 4.4.0
       fs-extra: 11.2.0
     transitivePeerDependencies:
       - supports-color
@@ -8671,7 +8675,7 @@ snapshots:
   https-proxy-agent@7.0.6:
     dependencies:
       agent-base: 7.1.3
-      debug: 4.4.0(supports-color@8.1.1)
+      debug: 4.4.0
     transitivePeerDependencies:
       - supports-color
     optional: true
@@ -8959,7 +8963,7 @@ snapshots:
   istanbul-lib-source-maps@5.0.6:
     dependencies:
       '@jridgewell/trace-mapping': 0.3.25
-      debug: 4.4.0(supports-color@8.1.1)
+      debug: 4.4.0
       istanbul-lib-coverage: 3.2.2
     transitivePeerDependencies:
       - supports-color
@@ -9686,7 +9690,7 @@ snapshots:
     dependencies:
       '@tootallnate/quickjs-emscripten': 0.23.0
       agent-base: 7.1.1
-      debug: 4.4.0(supports-color@8.1.1)
+      debug: 4.4.0
       get-uri: 6.0.3
       http-proxy-agent: 7.0.2
       https-proxy-agent: 7.0.5
@@ -9884,7 +9888,7 @@ snapshots:
   proxy-agent@6.4.0:
     dependencies:
       agent-base: 7.1.1
-      debug: 4.4.0(supports-color@8.1.1)
+      debug: 4.4.0
       http-proxy-agent: 7.0.2
       https-proxy-agent: 7.0.5
       lru-cache: 7.18.3
@@ -10332,7 +10336,7 @@ snapshots:
   socks-proxy-agent@8.0.4:
     dependencies:
       agent-base: 7.1.1
-      debug: 4.4.0(supports-color@8.1.1)
+      debug: 4.4.0
       socks: 2.8.3
     transitivePeerDependencies:
       - supports-color
@@ -10467,7 +10471,7 @@ snapshots:
 
   sumchecker@3.0.1:
     dependencies:
-      debug: 4.4.0(supports-color@8.1.1)
+      debug: 4.4.0
     transitivePeerDependencies:
       - supports-color
 
@@ -10748,7 +10752,7 @@ snapshots:
   vite-node@2.1.8(@types/node@22.10.1)(terser@5.36.0):
     dependencies:
       cac: 6.7.14
-      debug: 4.4.0(supports-color@8.1.1)
+      debug: 4.4.0
       es-module-lexer: 1.5.4
       pathe: 1.1.2
       vite: 5.4.11(@types/node@22.10.1)(terser@5.36.0)
@@ -10783,7 +10787,7 @@ snapshots:
       '@vitest/spy': 2.1.8
       '@vitest/utils': 2.1.8
       chai: 5.1.2
-      debug: 4.4.0(supports-color@8.1.1)
+      debug: 4.4.0
       expect-type: 1.1.0
       magic-string: 0.30.15
       pathe: 1.1.2
