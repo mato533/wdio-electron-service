@@ -120,6 +120,7 @@
     "builder-util": "^25.1.7",
     "electron": "^33.2.1",
     "nock": "^14.0.0-beta.19",
+    "puppeteer-core": "^23.11.1",
     "rollup": "^4.28.1",
     "shx": "^0.3.4",
     "typescript": "^5.7.2",

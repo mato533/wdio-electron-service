@@ -8,6 +8,7 @@ import type {
   ExecuteOpts,
 } from '@wdio/electron-types';
 import type { Capabilities, Services } from '@wdio/types';
+import type { CDPSession, Browser as PuppeteerBrowser } from 'puppeteer-core';
 
 // import mockStore from './mockStore.js';
 import { CUSTOM_CAPABILITY_NAME } from './constants.js';
@@ -19,6 +20,7 @@ import { resetAllMocks } from './commands/resetAllMocks.js';
 import { restoreAllMocks } from './commands/restoreAllMocks.js';
 import { mockAll } from './commands/mockAll.js';
 import { DebuggerClient } from './electron.js';
+import { CdpClient } from './cdp.js';
 
 const waitUntilWindowAvailable = async (browser: WebdriverIO.Browser) =>
   await browser.waitUntil(async () => {
@@ -56,6 +58,8 @@ export default class ElectronWorkerService implements Services.ServiceInstance {
   #resetMocks = false;
   #restoreMocks = false;
   #debuggerClient: DebuggerClient | undefined = undefined;
+  #puppeteerBrowser?: PuppeteerBrowser;
+  #cdpSession?: CDPSession;
 
   constructor(globalOptions: ElectronServiceGlobalOptions = {}) {
     this.#globalOptions = globalOptions;
@@ -107,6 +111,33 @@ export default class ElectronWorkerService implements Services.ServiceInstance {
     this.#restoreMocks = restoreMocks ?? false;
     this.#browser = browser;
     this.#debuggerClient = new DebuggerClient(debugHost, debugPort);
+    this.#puppeteerBrowser = await browser.getPuppeteer();
+    try {
+      const targets = this.#puppeteerBrowser.targets();
+      log.debug('Targets:', targets);
+      // const target = this.#puppeteerBrowser.target();
+
+      const backgroundPage = targets.find((target) => {
+        log.debug('Checking target type:', target.type());
+        return target.type() === 'page';
+      });
+
+      if (!backgroundPage) {
+        throw new Error('ERROR:backgroundPage');
+      }
+
+      this.#cdpSession = await backgroundPage.createCDPSession();
+      // this.#cdpSession = await target?.createCDPSession();
+
+      if (!this.#cdpSession) {
+        throw new Error('ERROR:cdpSession');
+      }
+      const c = new CdpClient(this.#cdpSession);
+      await c.getExecutionContext();
+      await c.init();
+    } catch (error) {
+      log.debug('ERROR:catch', error);
+    }
 
     /**
      * Add electron API to browser object

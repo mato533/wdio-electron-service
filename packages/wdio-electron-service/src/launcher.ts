@@ -23,12 +23,9 @@ export default class ElectronLaunchService implements Services.ServiceInstance {
   #projectRoot: string;
   capabilities?: WebdriverIO.Capabilities | undefined;
 
-  #instanceId: string;
-
   constructor(globalOptions: ElectronServiceGlobalOptions, _caps: unknown, config: Options.Testrunner) {
     this.#globalOptions = globalOptions;
     this.#projectRoot = globalOptions.rootDir || config.rootDir || process.cwd();
-    this.#instanceId = crypto.randomUUID(); // UUIDを生成
   }
 
   async onPrepare(_config: Options.Testrunner, capabilities: ElectronServiceCapabilities) {
