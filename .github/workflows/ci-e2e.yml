@@ -1,4 +1,4 @@
-name: E2E Tests
+name: E2E Tests Runner
 
 on:
   workflow_call:
@@ -11,31 +11,66 @@ on:
       node-version:
         required: true
         type: string
+      e2e-scenario:
+        required: true
+        type: string
+      app-build-command:
+        type: string
+        default: build
 
 jobs:
-  e2e:
-    name: E2E Tests
-    uses: ./.github/workflows/ci-runner.yml
+  builder-test:
+    name: E2E ${{ inputs.e2e-scenario }}-${{ matrix.type }}${{ contains(inputs.app-build-command, 'mac-universal') && ' for Mac-Universal' || '' }} tests (${{ inputs.os }}.${{ inputs.node-version }})
+    runs-on: ${{ inputs.os }}
     strategy:
-      matrix:
-        e2e-scenario: ['builder', 'forge', 'no-binary']
       fail-fast: false
-    with:
-      os: ${{ inputs.os }}
-      node-version: ${{ inputs.node-version }}
-      e2e-scenario: ${{ matrix.e2e-scenario }}
-      app-build-command: 'build'
+      matrix:
+        # os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
+        type: ['esm', 'cjs']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ssh-key: ${{ secrets.DEPLOY_KEY }}
+      - uses: ./.github/workflows/actions/setup-workspace
+        with:
+          node-version: ${{ inputs.node-version }}
+      - name: Download Build Archive
+        uses: ./.github/workflows/actions/download-archive
+        with:
+          name: wdio-electron-service
+          path: .
+          filename: wdio-electron-service-build.zip
+      - run: sudo sysctl -q -w kernel.apparmor_restrict_unprivileged_userns=0
+        # Workaround for linux CI
+        # https://github.com/electron/electron/issues/41066
+        if: ${{ contains(inputs.os, 'ubuntu') }}
 
-  e2e-mac-universal:
-    name: E2E for Mac-Universal
-    if: ${{ contains(inputs.os, 'macos') }}
-    uses: ./.github/workflows/ci-runner.yml
-    strategy:
-      matrix:
-        e2e-scenario: ['builder', 'forge']
-      fail-fast: false
-    with:
-      os: ${{ inputs.os }}
-      node-version: ${{ inputs.node-version }}
-      e2e-scenario: ${{ matrix.e2e-scenario }}
-      app-build-command: 'build:mac-universal'
+      - run: pnpm run init-forge:package
+        if: ${{ contains(inputs.e2e-scenario, 'forge') }}
+        shell: bash
+
+      - run: pnpm run init-forge:app-${{ matrix.type }}
+        if: ${{ contains(inputs.e2e-scenario, 'forge') }}
+        shell: bash
+
+      - run: pnpm exec turbo run ${{ inputs.app-build-command }} --filter=example-${{ inputs.e2e-scenario }}-${{ matrix.type }} --only
+        shell: bash
+      - run: pnpm exec turbo run init-e2es test:e2e:${{ inputs.e2e-scenario }}-${{ matrix.type }} --only
+        shell: bash
+      - name: 🐛 Show logs
+        shell: bash
+        if: failure()
+        run: |
+          pnpm run ci:e2e:logs
+      - name: 🐛 Upload logs
+        uses: ./.github/workflows/actions/upload-archive
+        if: failure()
+        with:
+          name: ${{ contains(inputs.app-build-command, 'mac-universal') && 'mac-universal' || inputs.os }}-e2e-${{ inputs.e2e-scenario }}-${{ matrix.type }}-logs
+          output: ${{ contains(inputs.app-build-command, 'mac-universal') && 'mac-universal' || inputs.os }}-e2e-${{ inputs.e2e-scenario }}-${{ matrix.type }}-logs.zip
+          paths: e2e/*/*.log
+      - name: 🐛 Debug Build
+        uses: stateful/vscode-server-action@v1.1.0
+        if: failure()
+        with:
+          timeout: '180000'

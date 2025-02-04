@@ -47,10 +47,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ['ubuntu-latest', 'windows-latest', 'macOS-latest']
+        os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
         node-version: ['20']
         e2e-scenario: ['builder', 'forge', 'no-binary']
-    uses: ./.github/workflows/ci-runner.yml
+    uses: ./.github/workflows/ci-e2e.yml
     with:
       os: ${{ matrix.os }}
       node-version: ${{ matrix.node-version }}
@@ -64,7 +64,7 @@ jobs:
       matrix:
         node-version: ['20']
         e2e-scenario: ['builder', 'forge']
-    uses: ./.github/workflows/ci-runner.yml
+    uses: ./.github/workflows/ci-e2e.yml
     with:
       os: 'macOS-latest'
       node-version: ${{ matrix.node-version }}
