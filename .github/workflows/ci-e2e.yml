@@ -1,0 +1,41 @@
+name: E2E Tests
+
+on:
+  workflow_call:
+    # Make this a reusable workflow, no value needed
+    # https://docs.github.com/en/actions/using-workflows/reusing-workflows
+    inputs:
+      os:
+        required: true
+        type: string
+      node-version:
+        required: true
+        type: string
+
+jobs:
+  e2e:
+    name: E2E Tests
+    uses: ./.github/workflows/ci-runner.yml
+    strategy:
+      matrix:
+        e2e-scenario: ['builder', 'forge', 'no-binary']
+      fail-fast: false
+    with:
+      os: ${{ inputs.os }}
+      node-version: ${{ inputs.node-version }}
+      e2e-scenario: ${{ matrix.e2e-scenario }}
+      app-build-command: 'build'
+
+  e2e-mac-universal:
+    name: E2E for Mac-Universal
+    if: ${{ contains(inputs.os, 'macos') }}
+    uses: ./.github/workflows/ci-runner.yml
+    strategy:
+      matrix:
+        e2e-scenario: ['builder', 'forge']
+      fail-fast: false
+    with:
+      os: ${{ inputs.os }}
+      node-version: ${{ inputs.node-version }}
+      e2e-scenario: ${{ matrix.e2e-scenario }}
+      app-build-command: 'build:mac-universal'

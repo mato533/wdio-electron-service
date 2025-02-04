@@ -14,156 +14,59 @@ env:
 
 jobs:
   build:
-    name: Build & Test
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macOS-latest]
-        node-version: [20.x]
-      fail-fast: false
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⬇️ Checkout Code
+        uses: actions/checkout@v4
 
-    steps:
       - uses: actions/checkout@v4
         with:
           ssh-key: ${{ secrets.DEPLOY_KEY }}
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+
+      - uses: ./.github/workflows/actions/setup-workspace
         with:
-          node-version: ${{ matrix.node-version }}
-      - name: Cache pnpm modules
-        uses: actions/cache@v4
-        env:
-          cache-name: cache-pnpm-modules
-        with:
-          path: ~/.pnpm-store
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ matrix.node-version }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-${{ matrix.node-version }}-
-      - uses: pnpm/action-setup@v4
-        with:
-          run_install: false
-      - name: Set pnpm store path
-        run: |
-          pnpm config set store-dir ~/.pnpm-store --global
-      - name: Install Dependencies
-        run: |
-          pnpm install
+          node-version: '20'
+
+      - name: 👷 Build Packages
+        run: pnpm run build
         shell: bash
-      - name: Run Tests
-        run: |
-          if [ "$RUNNER_OS" == "Linux" ]; then
-            # Workaround for linux CI
-            # https://github.com/electron/electron/issues/41066
-            sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
-            # Run tasks in serial on Ubuntu to avoid Xvfb issues
-            pnpm run ci-linux
-          else
-            pnpm run ci
-          fi
-        shell: bash
-      - name: 🐛 Show logs
-        if: failure()
-        run: |
-          pnpm run ci:e2e:logs
-      - name: 🐛 Debug Build
-        uses: stateful/vscode-server-action@v1.1.0
-        if: failure()
+
+      - name: ⬆️ Upload Build Artifacts
+        uses: ./.github/workflows/actions/upload-archive
         with:
-          timeout: '180000'
-  build-macos-universal:
-    name: MacOS Universal Build & Test
-    runs-on: ${{ matrix.os }}
+          name: wdio-electron-service
+          output: wdio-electron-service-build.zip
+          paths: packages/*/dist packages/*/cjs
+  unit:
+    needs: [build]
+    uses: ./.github/workflows/ci-unit.yml
+
+  e2e:
+    name: E2E Tests
+    needs: [build]
     strategy:
-      matrix:
-        os: [macOS-latest]
-        node-version: [20.x]
       fail-fast: false
-    steps:
-      - uses: actions/checkout@v4
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-      - name: Cache pnpm modules
-        uses: actions/cache@v4
-        env:
-          cache-name: cache-pnpm-modules
-        with:
-          path: ~/.pnpm-store
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ matrix.node-version }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-${{ matrix.node-version }}-
-      - uses: pnpm/action-setup@v4
-        with:
-          run_install: false
-      - name: Set pnpm store path
-        run: |
-          pnpm config set store-dir ~/.pnpm-store --global
-      - name: Install Dependencies
-        run: |
-          pnpm install
-        shell: bash
-      - name: Run Tests
-        run: |
-          pnpm build
-          pnpm run ci-mac:e2e:mac-universal
-        shell: bash
-      - name: 🐛 Show logs
-        if: failure()
-        run: |
-          pnpm run ci:e2e:logs
-      - name: 🐛 Debug Build
-        uses: stateful/vscode-server-action@v1.1.0
-        if: failure()
-        with:
-          timeout: '180000'
-  build-windows:
-    name: Windows Build & Test
-    runs-on: ${{ matrix.os }}
+      matrix:
+        os: ['ubuntu-latest', 'windows-latest', 'macOS-latest']
+        node-version: ['20']
+        e2e-scenario: ['builder', 'forge', 'no-binary']
+    uses: ./.github/workflows/ci-runner.yml
+    with:
+      os: ${{ matrix.os }}
+      node-version: ${{ matrix.node-version }}
+      e2e-scenario: ${{ matrix.e2e-scenario }}
+
+  e2e-mac-universal:
+    name: E2E for Mac-Universal
+    needs: [build]
     strategy:
-      matrix:
-        os: [windows-latest]
-        test: ['units', 'e2e:no-binary', 'e2e:builder-cjs', 'e2e:builder-esm', 'e2e:forge-cjs', 'e2e:forge-esm']
-        node-version: [20.x]
       fail-fast: false
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ssh-key: ${{ secrets.DEPLOY_KEY }}
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-      - name: Cache pnpm modules
-        uses: actions/cache@v4
-        env:
-          cache-name: cache-pnpm-modules
-        with:
-          path: ~/.pnpm-store
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ matrix.node-version }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-${{ matrix.node-version }}-
-      - uses: pnpm/action-setup@v4
-        with:
-          run_install: false
-      - name: Set pnpm store path
-        run: |
-          pnpm config set store-dir ~/.pnpm-store --global
-      - name: Install Dependencies
-        run: |
-          pnpm install
-        shell: bash
-      - name: Run Tests
-        run: |
-          pnpm run build
-          pnpm run ci-windows:${{ matrix.test }}
-        shell: bash
-      - name: 🐛 Show logs
-        if: failure()
-        run: |
-          pnpm run ci:e2e:logs
-      - name: 🐛 Debug Build
-        uses: stateful/vscode-server-action@v1.1.0
-        if: failure()
-        with:
-          timeout: '180000'
+      matrix:
+        node-version: ['20']
+        e2e-scenario: ['builder', 'forge']
+    uses: ./.github/workflows/ci-runner.yml
+    with:
+      os: 'macOS-latest'
+      node-version: ${{ matrix.node-version }}
+      e2e-scenario: ${{ matrix.e2e-scenario }}
+      app-build-command: 'build:mac-universal'
