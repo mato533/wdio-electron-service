@@ -49,7 +49,7 @@ jobs:
 
       - run: pnpm exec turbo run ${{ matrix.app-build-command }} --filter=example-${{ matrix.e2e-scenario }}* --only
         shell: bash
-      - run: pnpm exec turbo run init-e2es test:e2e:${{ matrix.e2e-scenario }}* --only
+      - run: pnpm exec turbo run init-e2es test:e2e:${{ matrix.e2e-scenario }}-esm test:e2e:${{ matrix.e2e-scenario }}-cjs --only
         shell: bash
       - name: 🐛 Show logs
         shell: bash

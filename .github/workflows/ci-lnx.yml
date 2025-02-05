@@ -47,7 +47,7 @@ jobs:
 
       - run: pnpm exec turbo run build --filter=example-${{ matrix.e2e-scenario }}* --only
         shell: bash
-      - run: pnpm exec turbo run init-e2es test:e2e:${{ matrix.e2e-scenario }}* --only --concurrency=1
+      - run: pnpm exec turbo run init-e2es test:e2e:${{ matrix.e2e-scenario }}-esm test:e2e:${{ matrix.e2e-scenario }}-cjs --only --concurrency=1
         shell: bash
       - name: 🐛 Show logs
         shell: bash
