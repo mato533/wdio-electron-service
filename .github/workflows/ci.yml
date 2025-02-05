@@ -38,21 +38,21 @@ jobs:
 
   e2e-win:
     name: E2E Tests
-    needs: [build, unit]
+    needs: [build]
     uses: ./.github/workflows/ci-e2e.yml
     with:
       node-version: '20'
 
   e2e-mac:
     name: E2E for Mac
-    needs: [build, unit]
+    needs: [build]
     uses: ./.github/workflows/ci-mac.yml
     with:
       node-version: '20'
 
   e2e-linux:
     name: E2E for Linux
-    needs: [build, unit]
+    needs: [build]
     uses: ./.github/workflows/ci-lnx.yml
     with:
       node-version: '20'
