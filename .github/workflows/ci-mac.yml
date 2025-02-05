@@ -11,13 +11,16 @@ on:
 
 jobs:
   builder-test:
-    name: E2E ${{ matrix.e2e-scenario }}-${{ matrix.type }} tests (windows.${{ inputs.node-version }})
-    runs-on: 'windows-latest'
+    name: E2E ${{ matrix.e2e-scenario }}${{ contains(matrix.app-build-command, 'mac-universal') && ' for Mac-Universal' || '' }} tests (macos.${{ inputs.node-version }})
+    runs-on: 'macos-latest'
     strategy:
       fail-fast: false
       matrix:
         e2e-scenario: ['builder', 'forge', 'no-binary']
-        type: ['esm', 'cjs']
+        app-build-command: ['build', 'build:mac-universal']
+        exclude:
+          - e2e-scenario: 'no-binary'
+            app-build-command: 'build:mac-universal'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -36,13 +39,17 @@ jobs:
         if: ${{ contains(matrix.e2e-scenario, 'forge') }}
         shell: bash
 
-      - run: pnpm run init-forge:app-${{ matrix.type }}
+      - run: pnpm run init-forge:app-cjs
         if: ${{ contains(matrix.e2e-scenario, 'forge') }}
         shell: bash
 
-      - run: pnpm exec turbo run build --filter=example-${{ matrix.e2e-scenario }}-${{ matrix.type }} --only
+      - run: pnpm run init-forge:app-esm
+        if: ${{ contains(matrix.e2e-scenario, 'forge') }}
         shell: bash
-      - run: pnpm exec turbo run init-e2es test:e2e:${{ matrix.e2e-scenario }}-${{ matrix.type }} --only
+
+      - run: pnpm exec turbo run ${{ matrix.app-build-command }} --filter=example-${{ matrix.e2e-scenario }}* --only
+        shell: bash
+      - run: pnpm exec turbo run init-e2es test:e2e:${{ matrix.e2e-scenario }}* --only
         shell: bash
       - name: 🐛 Show logs
         shell: bash
@@ -53,8 +60,8 @@ jobs:
         uses: ./.github/workflows/actions/upload-archive
         if: failure()
         with:
-          name: windows-e2e-${{ matrix.e2e-scenario }}-${{ matrix.type }}-logs
-          output: windows-e2e-${{ matrix.e2e-scenario }}-${{ matrix.type }}-logs.zip
+          name: ${{ contains(matrix.app-build-command, 'mac-universal') && 'mac-universal' || 'mac' }}-e2e-${{ matrix.e2e-scenario }}-logs
+          output: ${{ contains(matrix.app-build-command, 'mac-universal') && 'mac-universal' || 'mac' }}-e2e-${{ matrix.e2e-scenario }}-logs.zip
           paths: e2e/*/*.log
       - name: 🐛 Debug Build
         uses: stateful/vscode-server-action@v1.1.0

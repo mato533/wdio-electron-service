@@ -8,16 +8,14 @@ on:
       node-version:
         required: true
         type: string
-
 jobs:
   builder-test:
-    name: E2E ${{ matrix.e2e-scenario }}-${{ matrix.type }} tests (windows.${{ inputs.node-version }})
-    runs-on: 'windows-latest'
+    name: E2E ${{ matrix.e2e-scenario }} tests (linux.${{ inputs.node-version }})
+    runs-on: 'ubuntu-latest'
     strategy:
       fail-fast: false
       matrix:
         e2e-scenario: ['builder', 'forge', 'no-binary']
-        type: ['esm', 'cjs']
     steps:
       - uses: actions/checkout@v4
         with:
@@ -31,18 +29,25 @@ jobs:
           name: wdio-electron-service
           path: .
           filename: wdio-electron-service-build.zip
+      # Workaround for linux CI
+      # https://github.com/electron/electron/issues/41066
+      - run: sudo sysctl -q -w kernel.apparmor_restrict_unprivileged_userns=0
 
       - run: pnpm run init-forge:package
         if: ${{ contains(matrix.e2e-scenario, 'forge') }}
         shell: bash
 
-      - run: pnpm run init-forge:app-${{ matrix.type }}
+      - run: pnpm run init-forge:app-cjs
         if: ${{ contains(matrix.e2e-scenario, 'forge') }}
         shell: bash
 
-      - run: pnpm exec turbo run build --filter=example-${{ matrix.e2e-scenario }}-${{ matrix.type }} --only
+      - run: pnpm run init-forge:app-esm
+        if: ${{ contains(matrix.e2e-scenario, 'forge') }}
         shell: bash
-      - run: pnpm exec turbo run init-e2es test:e2e:${{ matrix.e2e-scenario }}-${{ matrix.type }} --only
+
+      - run: pnpm exec turbo run build --filter=example-${{ matrix.e2e-scenario }}* --only
+        shell: bash
+      - run: pnpm exec turbo run init-e2es test:e2e:${{ matrix.e2e-scenario }}* --only --concurrency=1
         shell: bash
       - name: 🐛 Show logs
         shell: bash
@@ -53,8 +58,8 @@ jobs:
         uses: ./.github/workflows/actions/upload-archive
         if: failure()
         with:
-          name: windows-e2e-${{ matrix.e2e-scenario }}-${{ matrix.type }}-logs
-          output: windows-e2e-${{ matrix.e2e-scenario }}-${{ matrix.type }}-logs.zip
+          name: linux-e2e-${{ matrix.e2e-scenario }}-logs
+          output: linux-e2e-${{ matrix.e2e-scenario }}-logs.zip
           paths: e2e/*/*.log
       - name: 🐛 Debug Build
         uses: stateful/vscode-server-action@v1.1.0
