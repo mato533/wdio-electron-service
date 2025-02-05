@@ -1,4 +1,4 @@
-name: E2E Tests Runner
+name: E2E Tests - Mac
 
 on:
   workflow_call:
@@ -10,7 +10,7 @@ on:
         type: string
 
 jobs:
-  builder-test:
+  e2e:
     name: E2E ${{ matrix.e2e-scenario }}${{ contains(matrix.app-build-command, 'mac-universal') && ' for Mac-Universal' || '' }} tests (macos.${{ inputs.node-version }})
     runs-on: 'macos-latest'
     strategy:
@@ -39,11 +39,7 @@ jobs:
         if: ${{ contains(matrix.e2e-scenario, 'forge') }}
         shell: bash
 
-      - run: pnpm run init-forge:app-cjs
-        if: ${{ contains(matrix.e2e-scenario, 'forge') }}
-        shell: bash
-
-      - run: pnpm run init-forge:app-esm
+      - run: pnpm run init-forge:apps
         if: ${{ contains(matrix.e2e-scenario, 'forge') }}
         shell: bash
 

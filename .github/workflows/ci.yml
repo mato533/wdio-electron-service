@@ -32,14 +32,18 @@ jobs:
           name: wdio-electron-service
           output: wdio-electron-service-build.zip
           paths: packages/*/dist packages/*/cjs
-  unit:
+  lint:
     needs: [build]
+    uses: ./.github/workflows/ci-unit.yml
+
+  unit:
+    needs: [build, lint]
     uses: ./.github/workflows/ci-unit.yml
 
   e2e-win:
     name: E2E Tests
     needs: [build]
-    uses: ./.github/workflows/ci-e2e.yml
+    uses: ./.github/workflows/ci-win.yml
     with:
       node-version: '20'
 

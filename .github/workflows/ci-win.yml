@@ -1,4 +1,4 @@
-name: E2E Tests Runner
+name: E2E Tests - Windows
 
 on:
   workflow_call:
@@ -10,7 +10,7 @@ on:
         type: string
 
 jobs:
-  builder-test:
+  e2e:
     name: E2E ${{ matrix.e2e-scenario }}-${{ matrix.type }} tests (windows.${{ inputs.node-version }})
     runs-on: 'windows-latest'
     strategy:
