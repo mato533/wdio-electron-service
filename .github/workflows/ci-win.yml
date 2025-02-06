@@ -15,17 +15,19 @@ on:
 
 jobs:
   e2e:
-    name: E2E ${{ inputs.e2e-scenario }}-${{ matrix.type }} tests (windows.${{ inputs.node-version }})
+    name: E2E ${{ inputs.e2e-scenario }}-${{ matrix.type }} tests (${{ matrix.os }}.${{ inputs.node-version }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
         include:
-          - os: 'windows-latest'
-            type: 'cjs'
-          - os: 'windows-latest'
-            type: 'esm'
+          - type: 'cjs'
+            os: 'windows-latest'
+
+          - type: 'esm'
+            os: 'windows-latest'
+
     steps:
       - uses: actions/checkout@v4
         with:
@@ -59,8 +61,8 @@ jobs:
         uses: ./.github/workflows/actions/upload-archive
         if: failure()
         with:
-          name: ${{ matrix.os }}-e2e-${{ inputs.e2e-scenario }}-${{ matrix.type }}-logs
-          output: ${{ matrix.os }}-e2e-${{ inputs.e2e-scenario }}-${{ matrix.type }}-logs.zip
+          name: ${{ matrix.os }}-e2e-${{ inputs.e2e-scenario }}${{ !matrix.type && '' || format('-{0})', matrix.type) }}-logs
+          output: ${{ matrix.os }}-e2e-${{ inputs.e2e-scenario }}${{ !matrix.type && '' || format('-{0})', matrix.type) }}-logs.zip
           paths: e2e/*/*.log
       - name: 🐛 Debug Build
         uses: stateful/vscode-server-action@v1.1.0

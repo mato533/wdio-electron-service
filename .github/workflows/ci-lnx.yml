@@ -17,10 +17,11 @@ jobs:
       matrix:
         os: ['ubuntu-latest', 'macos-latest', 'windows-latest']
         include:
-          - os: 'windows-latest'
-            type: 'cjs'
-          - os: 'windows-latest'
-            type: 'esm'
+          - type: 'cjs'
+            os: 'windows-latest'
+
+          - type: 'esm'
+            os: 'windows-latest'
         # app-build-command: ['build']
         # include:
         #   - os: 'macos-latest'
@@ -71,8 +72,8 @@ jobs:
         uses: ./.github/workflows/actions/upload-archive
         if: failure()
         with:
-          name: ${{ matrix.os }}-e2e-forge-logs
-          output: ${{ matrix.os }}-e2e-forge-logs.zip
+          name: ${{ matrix.os }}-e2e-forge${{ !matrix.type && '' || format('-{0})', matrix.type) }}-logs
+          output: ${{ matrix.os }}-e2e-forge${{ !matrix.type && '' || format('-{0})', matrix.type) }}logs.zip
           paths: e2e/*/*.log
 
       - name: 🐛 Debug Build
