@@ -1,4 +1,4 @@
-name: E2E Tests - Linux
+name: E2E Tests - Forge
 
 on:
   workflow_call:
@@ -10,12 +10,22 @@ on:
         type: string
 jobs:
   e2e:
-    name: E2E ${{ matrix.e2e-scenario }} tests (linux.${{ inputs.node-version }})
-    runs-on: 'ubuntu-latest'
+    name: E2E forge tests (Forge.${{ inputs.node-version }})
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        e2e-scenario: ['builder', 'forge', 'no-binary']
+        os: ['ubuntu-latest', 'macos-latest', 'windows-latest']
+        include:
+          - os: 'windows-latest'
+            type: 'cjs'
+          - os: 'windows-latest'
+            type: 'esm'
+        # app-build-command: ['build']
+        # include:
+        #   - os: 'macos-latest'
+        #     app-build-command: 'build:mac-universal'
+        # e2e-scenario: ['builder', 'forge', 'no-binary']
     steps:
       - uses: actions/checkout@v4
         with:
@@ -29,34 +39,42 @@ jobs:
           name: wdio-electron-service
           path: .
           filename: wdio-electron-service-build.zip
-      # Workaround for linux CI
-      # https://github.com/electron/electron/issues/41066
+
       - run: sudo sysctl -q -w kernel.apparmor_restrict_unprivileged_userns=0
+        # Workaround for linux CI
+        # https://github.com/electron/electron/issues/41066
+        if: ${{ contains(matrix.os, 'ubuntu') }}
 
       - run: pnpm run init-forge:package
-        if: ${{ contains(matrix.e2e-scenario, 'forge') }}
         shell: bash
 
       - run: pnpm run init-forge:apps
-        if: ${{ contains(matrix.e2e-scenario, 'forge') }}
         shell: bash
 
-      - run: pnpm exec turbo run build --filter=example-${{ matrix.e2e-scenario }}* --only
+      - run: pnpm exec turbo run build --filter=example-forge-${{ !matrix.type && '*' || matrix.type }} --only
         shell: bash
-      - run: pnpm exec turbo run init-e2es test:e2e:${{ matrix.e2e-scenario }}-esm test:e2e:${{ matrix.e2e-scenario }}-cjs --only --concurrency=1
+
+      - run: pnpm exec turbo run init-e2es test:e2e:forge-esm test:e2e:forge-cjs --only --concurrency=1
         shell: bash
+        if: ${{ !matrix.type }}
+      - run: pnpm exec turbo run init-e2es test:e2e:forge-${{matrix.type}} --only --concurrency=1
+        shell: bash
+        if: ${{ matrix.type }}
+
       - name: 🐛 Show logs
         shell: bash
         if: failure()
         run: |
           pnpm run ci:e2e:logs
+
       - name: 🐛 Upload logs
         uses: ./.github/workflows/actions/upload-archive
         if: failure()
         with:
-          name: linux-e2e-${{ matrix.e2e-scenario }}-logs
-          output: linux-e2e-${{ matrix.e2e-scenario }}-logs.zip
+          name: ${{ matrix.os }}-e2e-forge-logs
+          output: ${{ matrix.os }}-e2e-forge-logs.zip
           paths: e2e/*/*.log
+
       - name: 🐛 Debug Build
         uses: stateful/vscode-server-action@v1.1.0
         if: failure()

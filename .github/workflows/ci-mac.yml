@@ -1,4 +1,4 @@
-name: E2E Tests - Mac
+name: E2E Tests - Mac Universal build
 
 on:
   workflow_call:

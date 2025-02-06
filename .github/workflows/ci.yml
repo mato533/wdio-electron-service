@@ -19,32 +19,41 @@ jobs:
     needs: [build, lint]
     uses: ./.github/workflows/ci-unit.yml
 
-  e2e-mac:
-    name: E2E for Mac
-    needs: [build]
-    uses: ./.github/workflows/ci-mac.yml
-    with:
-      node-version: '20'
+  # e2e-mac:
+  #   name: E2E for Mac
+  #   needs: [build]
+  #   uses: ./.github/workflows/ci-mac.yml
+  #   with:
+  #     node-version: '20'
 
   e2e-mac-universal:
     name: E2E for Mac
-    needs: [build, e2e-mac]
+    needs: [build]
     uses: ./.github/workflows/ci-mac.yml
     with:
       node-version: '20'
       e2e-scenario: '["builder", "forge"]'
       app-build-command: 'build:mac-universal'
 
-  e2e-linux:
-    name: E2E for Linux
+  e2e-forge:
+    name: E2E for Forge
     needs: [build]
     uses: ./.github/workflows/ci-lnx.yml
     with:
       node-version: '20'
 
-  e2e-win:
-    name: E2E for Windows
-    needs: [build, e2e-linux]
+  e2e-builder:
+    name: E2E for Builder
+    needs: [build]
     uses: ./.github/workflows/ci-win.yml
     with:
       node-version: '20'
+      e2e-scenario: 'builder'
+
+  e2e-no-binary:
+    name: E2E for No-Binary
+    needs: [build, e2e-builder]
+    uses: ./.github/workflows/ci-win.yml
+    with:
+      node-version: '20'
+      e2e-scenario: 'no-binary'
