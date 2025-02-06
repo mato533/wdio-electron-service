@@ -10,18 +10,12 @@ on:
         type: string
 jobs:
   e2e:
-    name: E2E forge tests (Forge.${{ inputs.node-version }})
+    name: E2E forge tests (Forge.${{ matrix.os }}.${{ inputs.node-version }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: ['ubuntu-latest', 'macos-latest', 'windows-latest']
-        include:
-          - type: 'cjs'
-            os: 'windows-latest'
-
-          - type: 'esm'
-            os: 'windows-latest'
+        os: ['ubuntu-latest', 'macos-latest']
         # app-build-command: ['build']
         # include:
         #   - os: 'macos-latest'
@@ -52,15 +46,11 @@ jobs:
       - run: pnpm run init-forge:apps
         shell: bash
 
-      - run: pnpm exec turbo run build --filter=example-forge-${{ !matrix.type && '*' || matrix.type }} --only
+      - run: pnpm exec turbo run build --filter=example-forge-* --only
         shell: bash
 
       - run: pnpm exec turbo run init-e2es test:e2e:forge-esm test:e2e:forge-cjs --only --concurrency=1
         shell: bash
-        if: ${{ !matrix.type }}
-      - run: pnpm exec turbo run init-e2es test:e2e:forge-${{matrix.type}} --only --concurrency=1
-        shell: bash
-        if: ${{ matrix.type }}
 
       - name: 🐛 Show logs
         shell: bash
@@ -72,8 +62,66 @@ jobs:
         uses: ./.github/workflows/actions/upload-archive
         if: failure()
         with:
-          name: ${{ matrix.os }}-e2e-forge${{ !matrix.type && '' || format('-{0})', matrix.type) }}-logs
-          output: ${{ matrix.os }}-e2e-forge${{ !matrix.type && '' || format('-{0})', matrix.type) }}logs.zip
+          name: ${{ matrix.os }}-e2e-forge-logs
+          output: ${{ matrix.os }}-e2e-forge-logs.zip
+          paths: e2e/*/*.log
+
+      - name: 🐛 Debug Build
+        uses: stateful/vscode-server-action@v1.1.0
+        if: failure()
+        with:
+          timeout: '180000'
+
+  e2e-win:
+    name: E2E forge tests (Forge.windows.${{ inputs.node-version }})
+    runs-on: 'windows-latest'
+    strategy:
+      fail-fast: false
+      matrix:
+        type: ['esm', 'cjs']
+        # app-build-command: ['build']
+        # include:
+        #   - os: 'macos-latest'
+        #     app-build-command: 'build:mac-universal'
+        # e2e-scenario: ['builder', 'forge', 'no-binary']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ssh-key: ${{ secrets.DEPLOY_KEY }}
+      - uses: ./.github/workflows/actions/setup-workspace
+        with:
+          node-version: ${{ inputs.node-version }}
+      - name: Download Build Archive
+        uses: ./.github/workflows/actions/download-archive
+        with:
+          name: wdio-electron-service
+          path: .
+          filename: wdio-electron-service-build.zip
+
+      - run: pnpm run init-forge:package
+        shell: bash
+
+      - run: pnpm run init-forge:apps
+        shell: bash
+
+      - run: pnpm exec turbo run build --filter=example-forge-${{ matrix.type }} --only
+        shell: bash
+
+      - run: pnpm exec turbo run init-e2es test:e2e:forge-${{ matrix.type }} --only --concurrency=1
+        shell: bash
+
+      - name: 🐛 Show logs
+        shell: bash
+        if: failure()
+        run: |
+          pnpm run ci:e2e:logs
+
+      - name: 🐛 Upload logs
+        uses: ./.github/workflows/actions/upload-archive
+        if: failure()
+        with:
+          name: win-e2e-forge-${{ matrix.type }}-logs
+          output: win-e2e-forge-${{ matrix.type }}logs.zip
           paths: e2e/*/*.log
 
       - name: 🐛 Debug Build
