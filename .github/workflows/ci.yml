@@ -9,32 +9,11 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: ⬇️ Checkout Code
-        uses: actions/checkout@v4
+    uses: ./.github/workflows/ci-build.yml
 
-      - uses: actions/checkout@v4
-        with:
-          ssh-key: ${{ secrets.DEPLOY_KEY }}
-
-      - uses: ./.github/workflows/actions/setup-workspace
-        with:
-          node-version: '20'
-
-      - name: 👷 Build Packages
-        run: pnpm run build
-        shell: bash
-
-      - name: ⬆️ Upload Build Artifacts
-        uses: ./.github/workflows/actions/upload-archive
-        with:
-          name: wdio-electron-service
-          output: wdio-electron-service-build.zip
-          paths: packages/*/dist packages/*/cjs
   lint:
     needs: [build]
-    uses: ./.github/workflows/ci-unit.yml
+    uses: ./.github/workflows/ci-lint.yml
 
   unit:
     needs: [build, lint]
