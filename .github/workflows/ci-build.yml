@@ -17,13 +17,6 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Download Build Archive
-        uses: ./.github/workflows/actions/download-archive
-        with:
-          name: wdio-electron-service
-          path: .
-          filename: wdio-electron-service-build.zip
-
       - name: 👷 Build Packages
         run: pnpm run build
         shell: bash
