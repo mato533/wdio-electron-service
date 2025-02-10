@@ -197,8 +197,7 @@ describe('injectDependency', () => {
       bundleReplace: (importName: string) => `const ${importName} =`,
     };
 
-    const code = await injectDependency.call(context, 'src/test.js', param, templateContent);
-
+    const code = await injectDependency.call(context, param, templateContent);
     expect(code).toBe('const obj = {\n  a: 1,\n  b: 2,\n};\n\nconst obj = { obj };\n');
   });
 
@@ -219,8 +218,7 @@ describe('injectDependency', () => {
       bundleReplace: (importName: string) => `const ${importName} =`,
     };
 
-    await injectDependency.call(context, 'src/test.js', param, templateContent);
-
+    await injectDependency.call(context, param, templateContent);
     expect(context.error).toHaveBeenCalled();
   });
 
@@ -243,8 +241,7 @@ describe('injectDependency', () => {
       bundleReplace: (importName: string) => `const ${importName} =`,
     };
 
-    await injectDependency.call(context, 'src/test.js', param, templateContent);
-
+    await injectDependency.call(context, param, templateContent);
     expect(context.error).toHaveBeenCalled();
   });
 
@@ -267,8 +264,7 @@ describe('injectDependency', () => {
       bundleReplace: (importName: string) => `const ${importName} =`,
     };
 
-    await injectDependency.call(context, 'src/test.js', param, templateContent);
-
+    await injectDependency.call(context, param, templateContent);
     expect(context.error).toHaveBeenCalled();
   });
 });

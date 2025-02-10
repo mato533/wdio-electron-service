@@ -31,14 +31,14 @@ const configEsm: RollupOptions = {
     injectDependencyPlugin([
       {
         packageName: '@vitest/spy',
-        targetFile: 'index.js',
+        targetFile: 'src/mock.ts',
         bundleRegExp: /export/,
         importName: 'spy',
         bundleReplace: (importName: string) => `const ${importName} =`,
       },
       {
         packageName: 'fast-copy',
-        targetFile: 'index.js',
+        targetFile: 'src/service.ts',
         bundleRegExp: /export.*$/m,
         importName: '{ default: copy }',
         bundleReplace: (importName: string) => `const ${importName} = { default: index };`,

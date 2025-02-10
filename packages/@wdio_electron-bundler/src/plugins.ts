@@ -1,5 +1,3 @@
-import { writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
 import type { NormalizedPackageJson } from 'read-package-up';
 import { type Plugin } from 'rollup';
 import { injectDependency, type InjectDependencyPluginOptions } from './utils';
@@ -57,40 +55,27 @@ export const warnToErrorPlugin = (): Plugin => {
   };
 };
 
-// Exclude from Unit Test to check with build results of wdio-electron-service package
 export const injectDependencyPlugin = (
   options: InjectDependencyPluginOptions | InjectDependencyPluginOptions[],
 ): Plugin => {
   const pluginOptions = Array.isArray(options) ? options : [options];
-  const injectedMap = new Map();
+  const targetFiles = [...new Set(pluginOptions.map((item) => item.targetFile))];
+
   return {
     name: 'rollup-wdio-inject-dependency',
-    async writeBundle(options, bundle) {
-      for (const pluginOption of pluginOptions) {
-        const filePath = join(options.dir!, pluginOption.targetFile);
-        const contents = injectedMap.has(filePath) ? injectedMap.get(filePath) : bundle[pluginOption.targetFile];
-        if (!contents) {
-          this.warn(`Injection target is not exist: ${pluginOption.targetFile}`);
-          return;
-        }
-        if (!(`code` in contents)) {
-          this.warn(`Injection target is not chunk file: ${pluginOption.targetFile}`);
-          return;
-        }
-        const code = await injectDependency.call(
-          this,
-          join(options.dir!, pluginOption.targetFile),
-          pluginOption,
-          contents.code,
-        );
-        injectedMap.set(filePath, { code });
+    async transform(code, id) {
+      const targetFile = targetFiles.find((targetFile) => id.endsWith(targetFile));
+      if (!targetFile) {
+        return null;
       }
 
-      // Write the rendered content to a file
-      for (const [filePath, contents] of injectedMap.entries()) {
-        await writeFile(filePath, contents.code, 'utf-8');
-        this.info(`Successfully wrote the bundle file: ${filePath}`);
+      const targetOptions = pluginOptions.filter((pluginOption) => pluginOption.targetFile === targetFile);
+
+      let newCode = code;
+      for (const targetOption of targetOptions) {
+        newCode = await injectDependency.call(this, targetOption, newCode);
       }
+      return { code: newCode, map: null };
     },
   };
 };
