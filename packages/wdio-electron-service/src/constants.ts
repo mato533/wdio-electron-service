@@ -7,3 +7,5 @@ export const CUSTOM_CAPABILITY_NAME = 'wdio:electronServiceOptions';
 export enum Channel {
   Execute = 'wdio-electron.execute',
 }
+
+export const MOCK_CALL_EVENT_PREFIX = 'wdio-electron-service-mock-event: ';

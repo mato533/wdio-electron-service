@@ -1,4 +1,7 @@
 import { fn as vitestFn, type Mock } from '@vitest/spy';
+import { print, parse } from 'recast';
+import * as babelParser from '@babel/parser';
+import { namedTypes as n, builders as b } from 'ast-types';
 import type {
   AbstractFn,
   ElectronApiFn,
@@ -7,6 +10,7 @@ import type {
   ElectronType,
   ExecuteOpts,
 } from '@wdio/electron-types';
+import { MOCK_CALL_EVENT_PREFIX } from './constants';
 
 async function restoreElectronFunctionality(apiName: string, funcName: string) {
   await browser.electron.execute<void, [string, string, ExecuteOpts]>(
@@ -24,6 +28,49 @@ async function restoreElectronFunctionality(apiName: string, funcName: string) {
     { internal: true },
   );
 }
+//remove first arg `electron`. electron can be access as global scope.
+const addEventLog = (funcStr: string, apiName: string, funcName: string) => {
+  // generate ATS
+  const ast = parse(funcStr, {
+    parser: {
+      parse: (source: string) =>
+        babelParser.parse(source, {
+          sourceType: 'module',
+          plugins: ['typescript'],
+        }),
+    },
+  });
+
+  let funcNode = null;
+  const topLevelNode = ast.program.body[0];
+
+  if (topLevelNode.type === 'ExpressionStatement') {
+    // Arrow function
+    funcNode = topLevelNode.expression;
+  } else if (topLevelNode.type === 'FunctionDeclaration') {
+    // Function declaration
+    funcNode = topLevelNode;
+  }
+
+  if (!funcNode) {
+    throw new Error('Unsupported function type');
+  }
+
+  const logStatement = b.expressionStatement(
+    b.callExpression(b.memberExpression(b.identifier('console'), b.identifier('log')), [
+      b.stringLiteral(`${MOCK_CALL_EVENT_PREFIX}electron.${apiName}.${funcName}`),
+    ]),
+  );
+
+  if (!n.BlockStatement.check(funcNode.body)) {
+    const returnStatement = b.returnStatement(funcNode.body);
+    funcNode.body = b.blockStatement([logStatement, returnStatement]);
+  } else {
+    funcNode.body.body.unshift(logStatement);
+  }
+
+  return print(ast).code;
+};
 
 export async function createMock(apiName: string, funcName: string) {
   const outerMock = vitestFn();
@@ -38,18 +85,19 @@ export async function createMock(apiName: string, funcName: string) {
 
   mock.__isElectronMock = true;
 
+  const defaultImplementation = () => undefined;
+  const transformedCode = addEventLog(defaultImplementation.toString(), apiName, funcName);
   // initialise inner (Electron) mock
-  await browser.electron.execute<void, [string, string, ExecuteOpts]>(
-    async (electron, apiName, funcName) => {
+  await browser.electron.execute<void, [string, string, string, ExecuteOpts]>(
+    async (electron, apiName, funcName, defaultImplementation) => {
       const electronApi = electron[apiName as keyof typeof electron];
       const spy = await import('@vitest/spy');
-      const mockFn = spy.fn();
-
-      // replace target API with mock
+      const mockFn = spy.fn(new Function(`return ${defaultImplementation}`)() as AbstractFn);
       electronApi[funcName as keyof typeof electronApi] = mockFn as ElectronApiFn;
     },
     apiName,
     funcName,
+    transformedCode,
     { internal: true },
   );
 
@@ -80,6 +128,7 @@ export async function createMock(apiName: string, funcName: string) {
   };
 
   mock.mockImplementation = async (implFn: AbstractFn) => {
+    const transformedCode = addEventLog(implFn.toString(), apiName, funcName);
     await browser.electron.execute<void, [string, string, string, ExecuteOpts]>(
       (electron, apiName, funcName, mockImplementationStr) => {
         const electronApi = electron[apiName as keyof typeof electron];
@@ -88,7 +137,7 @@ export async function createMock(apiName: string, funcName: string) {
       },
       apiName,
       funcName,
-      implFn.toString(),
+      transformedCode,
       { internal: true },
     );
     outerMockImplementation(implFn);
@@ -97,6 +146,7 @@ export async function createMock(apiName: string, funcName: string) {
   };
 
   mock.mockImplementationOnce = async (implFn: AbstractFn) => {
+    const transformedCode = addEventLog(implFn.toString(), apiName, funcName);
     await browser.electron.execute<void, [string, string, string, ExecuteOpts]>(
       (electron, apiName, funcName, mockImplementationStr) => {
         const electronApi = electron[apiName as keyof typeof electron];
@@ -105,7 +155,7 @@ export async function createMock(apiName: string, funcName: string) {
       },
       apiName,
       funcName,
-      implFn.toString(),
+      transformedCode,
       { internal: true },
     );
     outerMockImplementationOnce(implFn);
