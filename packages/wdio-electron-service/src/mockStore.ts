@@ -2,6 +2,7 @@ import type { ElectronMock } from '@wdio/electron-types';
 
 export class ElectronServiceMockStore {
   #mockFns: Map<string, ElectronMock>;
+  #promises: Set<Promise<void>> = new Set();
 
   constructor() {
     this.#mockFns = new Map<string, ElectronMock>();
@@ -23,6 +24,16 @@ export class ElectronServiceMockStore {
 
   getMocks() {
     return Array.from(this.#mockFns.entries());
+  }
+
+  setPromise(promise: Promise<void>) {
+    this.#promises.add(promise);
+  }
+  deletePromise(promise: Promise<void>) {
+    this.#promises.delete(promise);
+  }
+  getPromises() {
+    return this.#promises;
   }
 }
 
