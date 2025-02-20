@@ -2,6 +2,8 @@ import os from 'node:os';
 import log from '@wdio/electron-utils/log';
 import { CdpBridge } from '@wdio/cdp-bridge';
 import { SevereServiceError } from 'webdriverio';
+import mockStore from './mockStore';
+import { MOCK_CALL_EVENT_PREFIX } from './constants';
 
 export const getDebuggerEndpoint = (capabilities: WebdriverIO.Capabilities) => {
   log.trace('Try to detect the node debugger endpoint');
@@ -33,8 +35,23 @@ export class ElectronCdpBridge extends CdpBridge {
 
     const contextHandler = this.#getContextIdHandler();
 
+    this.on('Runtime.consoleAPICalled', async (params) => {
+      const { type, value } = params.args[0];
+      if (value && type === 'string' && value.startsWith(MOCK_CALL_EVENT_PREFIX)) {
+        const mockName = value.replace(MOCK_CALL_EVENT_PREFIX, '');
+        const p = new Promise<void>((resolve, reject) => {
+          const existingMock = mockStore.getMock(mockName);
+          existingMock
+            .update()
+            .then(() => resolve())
+            .catch((e) => reject(e));
+        });
+        mockStore.setPromise(p);
+        p.finally(() => mockStore.deletePromise(p));
+      }
+    });
+
     await this.send('Runtime.enable');
-    await this.send('Runtime.disable');
 
     this.#contextId = await contextHandler;
 
