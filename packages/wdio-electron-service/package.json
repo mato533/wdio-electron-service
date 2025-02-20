@@ -91,6 +91,7 @@
     "@wdio/electron-utils": "workspace:*",
     "@wdio/globals": "^9.8.0",
     "@wdio/logger": "^9.4.4",
+    "ast-types": "^0.14.2",
     "compare-versions": "^6.1.1",
     "debug": "^4.4.0",
     "electron-to-chromium": "^1.5.97",
