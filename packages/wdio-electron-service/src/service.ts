@@ -168,36 +168,9 @@ export default class ElectronWorkerService implements Services.ServiceInstance {
   }
 
   async afterCommand(commandName: string, args: unknown[]) {
-    // ensure mocks are updated
-    const mocks = mockStore.getMocks();
-
-    // White list of command which will input user actions to electron app.
-    const inputCommands = [
-      'addValue',
-      'clearValue',
-      'click',
-      'doubleClick',
-      'dragAndDrop',
-      'execute',
-      'executeAsync',
-      'moveTo',
-      'scrollIntoView',
-      'selectByAttribute',
-      'selectByIndex',
-      'selectByVisibleText',
-      'setValue',
-      'touchAction',
-      'action',
-      'actions',
-      'emulate',
-      'keys',
-      'scroll',
-      'setWindowSize',
-      'uploadFile',
-    ];
-
-    if (inputCommands.includes(commandName) && mocks.length > 0 && !isInternalCommand(args)) {
-      await Promise.all(mocks.map(async ([_mockId, mock]) => await mock.update()));
+    const promises = mockStore.getPromises();
+    if (mockStore.getMocks().length > 0 && !isInternalCommand(args) && promises.size > 0) {
+      await Promise.all(Array.from(promises));
     }
   }
 }

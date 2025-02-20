@@ -59,8 +59,9 @@ export async function execute<ReturnValue, InnerArguments extends unknown[]>(
 const syncMockStatus = async (args: unknown[]) => {
   const isInternalCommand = () => Boolean((args.at(-1) as ExecuteOpts)?.internal);
   const mocks = mockStore.getMocks();
-  if (mocks.length > 0 && !isInternalCommand()) {
-    await Promise.all(mocks.map(async ([_mockId, mock]) => mock.update()));
+  const promises = mockStore.getPromises();
+  if (mocks.length > 0 && !isInternalCommand() && promises.size > 0) {
+    await Promise.all(Array.from(promises));
   }
 };
 
