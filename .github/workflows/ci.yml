@@ -60,6 +60,13 @@ jobs:
         if: failure()
         run: |
           pnpm run ci:e2e:logs
+      - name: 🐛 Upload logs
+        uses: ./.github/workflows/actions/upload-archive
+        if: failure()
+        with:
+          name: ${{ matrix.os }}-e2e-logs
+          output: ${{ matrix.os }}-logs.zip
+          paths: e2e/*/*.log
       - name: 🐛 Debug Build
         uses: stateful/vscode-server-action@v1.1.0
         if: failure()
@@ -107,6 +114,13 @@ jobs:
         if: failure()
         run: |
           pnpm run ci:e2e:logs
+      - name: 🐛 Upload logs
+        uses: ./.github/workflows/actions/upload-archive
+        if: failure()
+        with:
+          name: mac-universal-e2e-logs
+          output: mac-universal-e2e-logs.zip
+          paths: e2e/*/*.log
       - name: 🐛 Debug Build
         uses: stateful/vscode-server-action@v1.1.0
         if: failure()
@@ -157,6 +171,13 @@ jobs:
         if: failure()
         run: |
           pnpm run ci:e2e:logs
+      - name: 🐛 Upload logs
+        uses: ./.github/workflows/actions/upload-archive
+        if: failure()
+        with:
+          name: windows-e2e-${{ matrix.test }}-logs
+          output: windows-e2e-${{ matrix.test }}-logs.zip
+          paths: e2e/*/*.log
       - name: 🐛 Debug Build
         uses: stateful/vscode-server-action@v1.1.0
         if: failure()
