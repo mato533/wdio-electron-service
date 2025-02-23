@@ -1,14 +1,12 @@
 import { vi, describe, beforeEach, it, expect } from 'vitest';
 
 import { execute } from '../../src/commands/execute.js';
-import { ElectronCdpBridge } from '../../src/debugger.js';
-import mockStore from '../../src/mockStore.js';
-
-import type { ElectronMock } from '@wdio/electron-types';
+import { ElectronCdpBridge } from '../../src/bridge.js';
 
 vi.mock('../../src/mockStore.js', () => {
   const mockStore = {
     getMocks: vi.fn().mockReturnValue([]),
+    getPromises: vi.fn().mockReturnValue([]),
   };
   return {
     default: mockStore,
@@ -107,13 +105,5 @@ describe('execute', () => {
 
   it('should throw error when pass not function definition', async () => {
     await expect(() => execute(globalThis.browser, client, 'const a = 1')).rejects.toThrowError();
-  });
-
-  it('should call `mock.update()` when mockStore has some mocks', async () => {
-    const updateMock = vi.fn();
-    vi.mocked(mockStore.getMocks).mockReturnValue([['dummy', { update: updateMock } as unknown as ElectronMock]]);
-    await execute(globalThis.browser, client, (_electron, a, b, c) => a + b + c, 1, 2, 3);
-
-    expect(updateMock).toHaveBeenCalledTimes(1);
   });
 });

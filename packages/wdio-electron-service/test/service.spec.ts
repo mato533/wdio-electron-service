@@ -1,12 +1,11 @@
-import { vi, describe, beforeEach, it, expect, type Mock } from 'vitest';
-import type { BrowserExtension, ElectronMock } from '@wdio/electron-types';
+import { vi, describe, beforeEach, it, expect } from 'vitest';
+import type { BrowserExtension } from '@wdio/electron-types';
 
 import { mockProcessProperty } from './helpers.js';
 import { execute } from '../src/commands/execute';
 import { clearAllMocks } from '../src/commands/clearAllMocks.js';
 import { resetAllMocks } from '../src/commands/resetAllMocks.js';
 import { restoreAllMocks } from '../src/commands/restoreAllMocks.js';
-import mockStore from '../src/mockStore.js';
 import type ElectronWorkerService from '../src/service.js';
 import { ensureActiveWindowFocus } from '../src/window.js';
 
@@ -149,7 +148,7 @@ describe('before', () => {
   });
 
   describe('copyOriginalApi', () => {
-    it('aa', async () => {
+    it('should copy original api', async () => {
       instance = new WorkerService();
       const browser = {
         waitUntil: vi.fn().mockImplementation(async (condition) => {
@@ -251,55 +250,5 @@ describe('beforeCommand', () => {
     await instance.beforeCommand('getWindowHandles', []);
 
     expect(ensureActiveWindowFocus).toHaveBeenCalledTimes(0);
-  });
-});
-
-describe('afterCommand', () => {
-  let mocks: [string, ElectronMock][] = [];
-
-  vi.mock('../src/mockStore', () => ({
-    default: {
-      getMocks: vi.fn(),
-    },
-  }));
-
-  beforeEach(() => {
-    (mockStore.getMocks as Mock).mockImplementation(() => mocks);
-  });
-
-  it.each(['deleteSession'])('should not update mocks when the command is %s', async (commandName: string) => {
-    instance = new WorkerService();
-    mocks = [
-      ['electron.app.getName', { update: vi.fn().mockResolvedValue({}) } as unknown as ElectronMock],
-      ['electron.app.getVersion', { update: vi.fn().mockResolvedValue({}) } as unknown as ElectronMock],
-    ];
-    await instance.afterCommand(commandName, [['look', 'some', 'args']]);
-
-    expect(mocks[0][1].update).not.toHaveBeenCalled();
-    expect(mocks[1][1].update).not.toHaveBeenCalled();
-  });
-
-  it('should not update mocks when the command is `execute` and internal is set', async () => {
-    instance = new WorkerService();
-    mocks = [
-      ['electron.app.getName', { update: vi.fn().mockResolvedValue({}) } as unknown as ElectronMock],
-      ['electron.app.getVersion', { update: vi.fn().mockResolvedValue({}) } as unknown as ElectronMock],
-    ];
-    await instance.afterCommand('execute', [['look', 'some', 'args'], { internal: true }]);
-
-    expect(mocks[0][1].update).not.toHaveBeenCalled();
-    expect(mocks[1][1].update).not.toHaveBeenCalled();
-  });
-
-  it('should update mocks when the command is `execute` and internal is not set', async () => {
-    instance = new WorkerService();
-    mocks = [
-      ['electron.app.getName', { update: vi.fn().mockResolvedValue({}) } as unknown as ElectronMock],
-      ['electron.app.getVersion', { update: vi.fn().mockResolvedValue({}) } as unknown as ElectronMock],
-    ];
-    await instance.afterCommand('execute', [['look', 'some', 'args']]);
-
-    expect(mocks[0][1].update).toHaveBeenCalled();
-    expect(mocks[1][1].update).toHaveBeenCalled();
   });
 });

@@ -88,7 +88,7 @@ describe('ElectronCdpBridge', () => {
         .mocked(CdpBridge.prototype.connect)
         .mock.instances.slice(-1)[0]) as unknown as ElectronCdpBridge;
 
-      const [_method, callback] = vi.mocked(mockedInstance.on).mock.calls.slice(-1)[0];
+      const [_method, callback] = vi.mocked(mockedInstance.on).mock.calls[0];
       callback(
         {
           context: {
@@ -110,18 +110,19 @@ describe('ElectronCdpBridge', () => {
 
     it('should call super.on() with expected arguments', async () => {
       const mockedInstance = await getMockedInstance();
-      const [method, _callback] = vi.mocked(mockedInstance.on).mock.calls.slice(-1)[0];
-      expect(mockedInstance.on).toHaveBeenCalledTimes(1);
-      expect(method).toBe('Runtime.executionContextCreated');
+
+      expect(mockedInstance.on).toHaveBeenCalledTimes(2);
+      expect(vi.mocked(mockedInstance.on).mock.calls[0][0]).toBe('Runtime.executionContextCreated');
+      expect(vi.mocked(mockedInstance.on).mock.calls[1][0]).toBe('Runtime.consoleAPICalled');
     });
 
-    it('should contextId is set', async () => {
+    it('should set context id', async () => {
       const mockedInstance = await getMockedInstance();
-      expect((mockedInstance as unknown as ElectronCdpBridge).on).toHaveBeenCalledTimes(1);
+      expect((mockedInstance as unknown as ElectronCdpBridge).on).toHaveBeenCalledTimes(2);
       expect(mockedInstance.contextId).toBe(expectedContextId);
     });
 
-    it('should call super.on() with expected', async () => {
+    it('should call super.on() with expected on windows', async () => {
       vi.spyOn(os, 'type').mockReturnValue('Windows');
       const mockedInstance = await getMockedInstance();
       const expectedArgsOfEval = {
@@ -135,10 +136,9 @@ describe('ElectronCdpBridge', () => {
         replMode: true,
       };
 
-      expect(mockedInstance.send).toHaveBeenCalledTimes(3);
+      expect(mockedInstance.send).toHaveBeenCalledTimes(2);
       expect(mockedInstance.send).toHaveBeenNthCalledWith(1, 'Runtime.enable');
-      expect(mockedInstance.send).toHaveBeenNthCalledWith(2, 'Runtime.disable');
-      expect(mockedInstance.send).toHaveBeenNthCalledWith(3, 'Runtime.evaluate', expectedArgsOfEval);
+      expect(mockedInstance.send).toHaveBeenNthCalledWith(2, 'Runtime.evaluate', expectedArgsOfEval);
     });
 
     it('should call super.on() with expected on not windows', async () => {
@@ -154,10 +154,9 @@ describe('ElectronCdpBridge', () => {
         replMode: true,
       };
 
-      expect(mockedInstance.send).toHaveBeenCalledTimes(3);
+      expect(mockedInstance.send).toHaveBeenCalledTimes(2);
       expect(mockedInstance.send).toHaveBeenNthCalledWith(1, 'Runtime.enable');
-      expect(mockedInstance.send).toHaveBeenNthCalledWith(2, 'Runtime.disable');
-      expect(mockedInstance.send).toHaveBeenNthCalledWith(3, 'Runtime.evaluate', expectedArgsOfEval);
+      expect(mockedInstance.send).toHaveBeenNthCalledWith(2, 'Runtime.evaluate', expectedArgsOfEval);
     });
   });
 });
