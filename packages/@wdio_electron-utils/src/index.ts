@@ -177,14 +177,14 @@ export async function getBinaryPath(
 
   // multiple executable binaries case
   if (executableBinaryPaths.length > 1) {
-    log.info(`Detected multiple app binaries, using the first one: \n${executableBinaryPaths.join(', \n')}`);
+    log.debug(`Detected multiple app binaries, using the first one: \n${executableBinaryPaths.join(', \n')}`);
   }
 
   return executableBinaryPaths[0];
 }
 
 const forgeBuildInfo = (forgeConfig: ForgeConfig, pkg: NormalizedReadResult): ForgeBuildInfo => {
-  log.info(`Forge configuration detected: \n${JSON.stringify(forgeConfig)}`);
+  log.debug(`Forge configuration detected: \n${JSON.stringify(forgeConfig)}`);
   const appName: string = pkg.packageJson.productName || forgeConfig?.packagerConfig?.name || pkg.packageJson.name;
 
   if (!appName) {
@@ -200,7 +200,7 @@ const forgeBuildInfo = (forgeConfig: ForgeConfig, pkg: NormalizedReadResult): Fo
 };
 
 const builderBuildInfo = (builderConfig: BuilderConfig, pkg: NormalizedReadResult): BuilderBuildInfo => {
-  log.info(`Builder configuration detected: \n${JSON.stringify(builderConfig)}`);
+  log.debug(`Builder configuration detected: \n${JSON.stringify(builderConfig)}`);
   const appName: string = pkg.packageJson.productName || builderConfig?.productName || pkg.packageJson.name;
 
   if (!appName) {
@@ -236,7 +236,7 @@ export async function getAppBuildInfo(pkg: NormalizedReadResult): Promise<AppBui
 
     try {
       forgeConfigPath = path.join(rootDir, forgeConfigFile);
-      log.info(`Reading Forge config file: ${forgeConfigPath}...`);
+      log.debug(`Reading Forge config file: ${forgeConfigPath}...`);
       forgeConfig = ((await import(pathToFileURL(forgeConfigPath).toString())) as { default: ForgeConfig }).default;
     } catch (_e) {
       log.warn('Forge config file not found or invalid.');
@@ -252,14 +252,14 @@ export async function getAppBuildInfo(pkg: NormalizedReadResult): Promise<AppBui
     // if builder config is not found in the package.json, attempt to read `electron-builder.{yaml, yml, json, json5, toml}`
     // see also https://www.electron.build/configuration.html
     try {
-      log.info('Locating builder config file...');
+      log.debug('Locating builder config file...');
       const config = await getConfig(getBuilderConfigCandidates(), rootDir);
 
       if (!config) {
         throw new Error();
       }
 
-      log.info(`Detected config file: ${config.configFile}`);
+      log.debug(`Detected config file: ${config.configFile}`);
       builderConfig = config.result as BuilderConfig;
     } catch (_e) {
       log.warn('Builder config file not found or invalid.');
@@ -284,12 +284,12 @@ export async function getAppBuildInfo(pkg: NormalizedReadResult): Promise<AppBui
   }
 
   if (isForge) {
-    log.info('Using Forge configuration to get app build information...');
+    log.debug('Using Forge configuration to get app build information...');
     return forgeBuildInfo(forgeConfig, pkg);
   }
 
   if (isBuilder) {
-    log.info('Using Builder configuration to get app build information...');
+    log.debug('Using Builder configuration to get app build information...');
     return builderBuildInfo(builderConfig, pkg);
   }
 

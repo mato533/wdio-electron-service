@@ -51,7 +51,7 @@ export default class ElectronLaunchService implements Services.ServiceInstance {
       caps.map(async (cap) => {
         const electronVersion = cap.browserVersion || localElectronVersion || '';
         const chromiumVersion = await getChromiumVersion(electronVersion);
-        log.info(`Found Electron v${electronVersion} with Chromedriver v${chromiumVersion}`);
+        log.debug(`Found Electron v${electronVersion} with Chromedriver v${chromiumVersion}`);
 
         if (Number.parseInt(electronVersion.split('.')[0]) < 26 && !cap['wdio:chromedriverOptions']?.binary) {
           const invalidElectronVersionError = new SevereServiceError(
@@ -76,14 +76,14 @@ export default class ElectronLaunchService implements Services.ServiceInstance {
           appArgs = [`--app=${appEntryPoint}`, ...appArgs];
           log.debug('App entry point: ', appEntryPoint, appBinaryPath, appArgs);
         } else if (!appBinaryPath) {
-          log.info('No app binary specified, attempting to detect one...');
+          log.debug('No app binary specified, attempting to detect one...');
           try {
             const appBuildInfo = await getAppBuildInfo(pkg);
 
             try {
               appBinaryPath = await getBinaryPath(pkg.path, appBuildInfo, electronVersion);
 
-              log.info(`Detected app binary at ${appBinaryPath}`);
+              log.debug(`Detected app binary at ${appBinaryPath}`);
             } catch (_e) {
               const buildToolName = appBuildInfo.isForge ? 'Electron Forge' : 'electron-builder';
               const suggestedCompileCommand = `npx ${
