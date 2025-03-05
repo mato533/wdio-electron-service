@@ -116,6 +116,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: ['calculate']
     steps:
+      - uses: GitHubSecurityLab/actions-permissions/monitor@v1
+        with:
+          config: ${{ vars.PERMISSIONS_CONFIG }}
       - name: 👷 Checkout target branch
         uses: actions/checkout@v4
         with:
