@@ -115,11 +115,7 @@ jobs:
   release:
     runs-on: ubuntu-latest
     needs: ['calculate']
-    permissions: write-all
     steps:
-      - uses: GitHubSecurityLab/actions-permissions/monitor@v1
-        with:
-          config: ${{ vars.PERMISSIONS_CONFIG }}
       - name: 👷 Checkout target branch
         uses: actions/checkout@v4
         with:
@@ -256,6 +252,7 @@ jobs:
           Update branch name for LTS (new value: ${NEW_LTS_BRANCH})
           [skip ci]
           EOF
+          git show
           echo '::endgroup::'
 
       - name: 🏷️ Create Release and Tags
@@ -353,13 +350,3 @@ jobs:
           repository: webdriverio-community/wdio-electron-service
           tag_name: ${{ steps.push-tags.outputs.RELEASE_TAG }}
           token: $GITHUB_TOKEN
-
-      # Update branch protection rules for new branches during major releases
-      - name: 🔒 Update branch protection rules
-        if: ${{ contains(inputs.releaseVersion, 'major')  }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.github-token }}
-          NEXT_LTS_BRANCH: ${{ needs.calculate.outputs.next-lts-branch }}
-          REPO_OWNER: mato533
-          REPO_NAME: wdio-electron-service
-        run: pnpx tsx scripts/update-branch-protection.ts
