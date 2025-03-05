@@ -347,7 +347,7 @@ jobs:
 
       # Update branch protection rules for new branches during major releases
       - name: 🔒 Update branch protection rules
-        if: ${{ contains(inputs.releaseVersion, 'major') && !inputs.dryRun }}
+        if: ${{ contains(inputs.releaseVersion, 'major')  }}
         env:
           GITHUB_TOKEN: ${{ secrets.github-token }}
           NEXT_LTS_BRANCH: ${{ needs.calculate.outputs.next-lts-branch }}
