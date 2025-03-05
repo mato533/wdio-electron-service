@@ -351,6 +351,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.github-token }}
           NEXT_LTS_BRANCH: ${{ needs.calculate.outputs.next-lts-branch }}
-          REPO_OWNER: webdriverio-community
+          REPO_OWNER: mato533
           REPO_NAME: wdio-electron-service
         run: pnpx tsx scripts/update-branch-protection.ts
