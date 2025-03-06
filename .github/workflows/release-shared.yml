@@ -70,8 +70,8 @@ jobs:
 
   # Post-release tasks
   post_release:
-    needs: ['release_tasks']
-    uses: ./.github/workflows/release-modules/post-release.yml
+    needs: ['calculate_branches', 'calculate_branches', 'release_tasks']
+    uses: ./.github/workflows/release-shared-post.yml
     with:
       release_tag: ${{ needs.release_tasks.outputs.release_tag }}
       release_version: ${{ inputs.release_version }}
