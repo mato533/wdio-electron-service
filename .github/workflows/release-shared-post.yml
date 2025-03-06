@@ -34,10 +34,6 @@ on:
       deploy_key:
         description: 'SSH deploy key for pushing to the repository'
         required: true
-    outputs:
-      release_tag:
-        description: 'The created release tag'
-        value: ${{ jobs.release.outputs.release_tag }}
 
 jobs:
   release:
@@ -375,3 +371,15 @@ jobs:
             # Return to the original branch
             git checkout ${{ inputs.target_branch }}
           fi
+
+      # Create appropriate milestones based on the release type
+      - name: 🏷️ Create GitHub Milestones
+        # Skip during dry runs and prereleases
+        if: ${{ !inputs.dry_run && !contains(inputs.release_version, 'pre') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.github_token }}
+          RELEASE_TYPE: ${{ inputs.release_version }}
+        run: |
+          echo "::group::Creating GitHub milestones"
+          pnpx tsx scripts/create-milestones.ts
+          echo "::endgroup::"
