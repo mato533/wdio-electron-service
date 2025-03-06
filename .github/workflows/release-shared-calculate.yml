@@ -46,8 +46,8 @@ jobs:
   calculate:
     runs-on: 'ubuntu-latest'
     outputs:
-      target_branch: ${{ steps.calculate_versions.outputs.target_branch }}
-      next_lts_branch: ${{ steps.calculate_versions.outputs.next_lts_branch }}
+      target_branch: ${{ steps.define_branches.outputs.target_branch }}
+      next_lts_branch: ${{ steps.define_branches.outputs.next_lts_branch }}
     needs: ['check']
     steps:
       - name: 👷 Checkout repository
