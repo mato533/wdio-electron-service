@@ -184,3 +184,13 @@ jobs:
 
           # Pass the release tag to the next step
           echo "release_tag=${RELEASE_TAG}" >>"${GITHUB_OUTPUT}"
+
+      - name: 📝 Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true # Create as draft for manual review
+          generate_release_notes: true
+          prerelease: ${{ contains(inputs.release_version, 'pre') }}
+          repository: ${{ github.repository }}
+          tag_name: ${{ steps.push_tags.outputs.release_tag }}
+          token: ${{ secrets.github_token }}
