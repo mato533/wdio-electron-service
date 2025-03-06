@@ -103,58 +103,58 @@ jobs:
         # Uses turbo-version to bump versions and create git tags
         run: pnpm turbo-version -b ${{ inputs.release_version }}
 
-      - name: 📢 Publish to NPM
-        shell: bash
-        env:
-          RELEASE_BRANCH: ${{ inputs.target_branch }}
-        run: |
-          # Use 'latest' tag for main branch releases, 'lts' for LTS branch releases
-          test "${RELEASE_BRANCH}" == "main" && TAG="latest" || TAG="lts"
-          pnpx tsx scripts/publish.ts --tag ${TAG} ${{ inputs.dry_run && '--dry-run' || '' }}
+      # - name: 📢 Publish to NPM
+      #   shell: bash
+      #   env:
+      #     RELEASE_BRANCH: ${{ inputs.target_branch }}
+      #   run: |
+      #     # Use 'latest' tag for main branch releases, 'lts' for LTS branch releases
+      #     test "${RELEASE_BRANCH}" == "main" && TAG="latest" || TAG="lts"
+      #     pnpx tsx scripts/publish.ts --tag ${TAG} ${{ inputs.dry_run && '--dry-run' || '' }}
 
-      # Verify the published packages
-      - name: 🔍 Verify published packages
-        if: ${{ !inputs.dry_run }}
-        shell: bash
-        run: |
-          echo "::group::Verifying published packages"
+      # # Verify the published packages
+      # - name: 🔍 Verify published packages
+      #   if: ${{ !inputs.dry_run }}
+      #   shell: bash
+      #   run: |
+      #     echo "::group::Verifying published packages"
 
-          # Get the version that was just published
-          VERSION=$(jq -r '.version' packages/wdio-electron-service/package.json)
-          echo "Published version: $VERSION"
+      #     # Get the version that was just published
+      #     VERSION=$(jq -r '.version' packages/wdio-electron-service/package.json)
+      #     echo "Published version: $VERSION"
 
-          # Dynamically get package names from package.json files
-          PACKAGES=()
-          while IFS= read -r pkg_json; do
-            if [[ "$pkg_json" != *"node_modules"* ]]; then
-              PKG_NAME=$(jq -r '.name' "$pkg_json")
-              if [[ "$PKG_NAME" == @wdio/* ]]; then
-                PACKAGES+=("$PKG_NAME")
-              fi
-            fi
-          done < <(find packages -name "package.json" -not -depth 2)
+      #     # Dynamically get package names from package.json files
+      #     PACKAGES=()
+      #     while IFS= read -r pkg_json; do
+      #       if [[ "$pkg_json" != *"node_modules"* ]]; then
+      #         PKG_NAME=$(jq -r '.name' "$pkg_json")
+      #         if [[ "$PKG_NAME" == @wdio/* ]]; then
+      #           PACKAGES+=("$PKG_NAME")
+      #         fi
+      #       fi
+      #     done < <(find packages -name "package.json" -not -depth 2)
 
-          echo "Found packages to verify: ${PACKAGES[*]}"
+      #     echo "Found packages to verify: ${PACKAGES[*]}"
 
-          # Wait a moment for NPM to index the packages
-          echo "Waiting for NPM to index the packages..."
-          sleep 10
+      #     # Wait a moment for NPM to index the packages
+      #     echo "Waiting for NPM to index the packages..."
+      #     sleep 10
 
-          # Verify each package was published correctly
-          for pkg in "${PACKAGES[@]}"; do
-            echo "Verifying $pkg@$VERSION..."
+      #     # Verify each package was published correctly
+      #     for pkg in "${PACKAGES[@]}"; do
+      #       echo "Verifying $pkg@$VERSION..."
 
-            # Check if the package exists on NPM with the expected version
-            if ! npm view "$pkg@$VERSION" version &>/dev/null; then
-              echo "::error::Package $pkg@$VERSION not found on NPM"
-              exit 1
-            fi
+      #       # Check if the package exists on NPM with the expected version
+      #       if ! npm view "$pkg@$VERSION" version &>/dev/null; then
+      #         echo "::error::Package $pkg@$VERSION not found on NPM"
+      #         exit 1
+      #       fi
 
-            echo "✅ $pkg@$VERSION verified"
-          done
+      #       echo "✅ $pkg@$VERSION verified"
+      #     done
 
-          echo "All packages verified successfully"
-          echo "::endgroup::"
+      #     echo "All packages verified successfully"
+      #     echo "::endgroup::"
 
       - name: 📋 Log changes (dry run only)
         if: ${{ inputs.dry_run }}
