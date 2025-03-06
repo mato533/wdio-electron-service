@@ -54,25 +54,9 @@ jobs:
       branch: ${{ inputs.branch }}
       release_version: ${{ inputs.release_version }}
 
-  # Set up the environment for release
-  setup:
-    needs: ['calculate_branches']
-    uses: ./.github/workflows/release-modules/setup.yml
-    with:
-      ref: ${{ needs.calculate_branches.outputs.target_branch }}
-    secrets:
-      deploy_key: ${{ secrets.deploy_key }}
-
-  # Build and verify packages
-  build_verify:
-    needs: ['setup']
-    uses: ./.github/workflows/release-modules/build-verify.yml
-    with:
-      ref: ${{ needs.calculate_branches.outputs.target_branch }}
-
   # Main release process
   release_tasks:
-    needs: ['calculate_branches', 'setup', 'build_verify']
+    needs: ['calculate_branches', 'calculate_branches']
     uses: ./.github/workflows/release-shared-publish.yml
     with:
       target_branch: ${{ needs.calculate_branches.outputs.target_branch }}
