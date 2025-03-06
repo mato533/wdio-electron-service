@@ -56,13 +56,13 @@ jobs:
       - name: 🏗️ Build packages
         uses: ./.github/workflows/actions/build-verify
 
-      - name: 📦 Configure NPM registry
-        shell: bash
-        run: |
-          # Set up NPM authentication for publishing
-          pnpm set registry "https://registry.npmjs.org/"
-          pnpm set //registry.npmjs.org/:_authToken ${{ secrets.npm_token }}
-          pnpm whoami
+      # - name: 📦 Configure NPM registry
+      #   shell: bash
+      #   run: |
+      #     # Set up NPM authentication for publishing
+      #     pnpm set registry "https://registry.npmjs.org/"
+      #     pnpm set //registry.npmjs.org/:_authToken ${{ secrets.npm_token }}
+      #     pnpm whoami
 
       - name: 🔄 Update dependabot configuration
         # Update dependabot config for major releases, but not for prereleases
