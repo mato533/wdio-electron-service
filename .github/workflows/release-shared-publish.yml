@@ -21,7 +21,7 @@ on:
         default: false
         type: boolean
     secrets:
-      github_token:
+      github_bot_token:
         description: 'GitHub token for authentication'
         required: true
       npm_token:
@@ -193,4 +193,4 @@ jobs:
           prerelease: ${{ contains(inputs.release_version, 'pre') }}
           repository: ${{ github.repository }}
           tag_name: ${{ steps.push_tags.outputs.release_tag }}
-          token: ${{ secrets.github_token }}
+          token: ${{ secrets.github_bot_token }}

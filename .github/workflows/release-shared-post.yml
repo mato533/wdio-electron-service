@@ -25,11 +25,8 @@ on:
         default: false
         type: boolean
     secrets:
-      github_token:
+      github_bot_token:
         description: 'GitHub token for authentication'
-        required: true
-      npm_token:
-        description: 'NPM token for publishing packages'
         required: true
       deploy_key:
         description: 'SSH deploy key for pushing to the repository'
@@ -377,7 +374,7 @@ jobs:
         # Skip during dry runs and prereleases
         if: ${{ !inputs.dry_run && !contains(inputs.release_version, 'pre') }}
         env:
-          GITHUB_TOKEN: ${{ secrets.github_token }}
+          GITHUB_TOKEN: ${{ secrets.github_bot_token }}
           RELEASE_TYPE: ${{ inputs.release_version }}
         run: |
           echo "::group::Creating GitHub milestones"
