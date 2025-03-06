@@ -27,6 +27,7 @@ runs:
       run: pnpm install --frozen-lockfile
 
     - name: 🔧 Configure Git identity
+      shell: bash
       run: |
         git config --global user.email "bot@webdriver.io"
         git config --global user.name "WebdriverIO Release Bot"
