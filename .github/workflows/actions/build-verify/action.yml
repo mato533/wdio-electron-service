@@ -7,6 +7,7 @@ runs:
   using: composite
   steps:
     - name: 🏗️ Build packages
+      shell: bash
       run: pnpm build
 
     # Verify the integrity of built packages
