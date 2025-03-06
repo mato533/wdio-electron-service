@@ -1,0 +1,41 @@
+description: 'setup node and pnpm & initializes dependencies'
+inputs:
+  node-version:
+    description: 'Version for node to be setup.'
+    required: true
+outputs:
+  package_version:
+    description: 'Current package version'
+    value: ${{ steps.get_version.outputs.version }}
+
+runs:
+  using: composite
+  steps:
+    - name: 🧰 Setup PNPM
+      uses: pnpm/action-setup@v4
+      with:
+        run_install: false
+
+    - name: 🛠️ Setup Node.js ${{ inputs.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: 'pnpm'
+
+    - name: ⚙️ Install Dependencies
+      shell: bash
+      run: pnpm install --frozen-lockfile
+
+    - name: 🔧 Configure Git identity
+      run: |
+        git config --global user.email "bot@webdriver.io"
+        git config --global user.name "WebdriverIO Release Bot"
+
+    - name: 📦 Get package version
+      id: get_version
+      shell: bash
+      run: |
+        PKG_JSON='packages/wdio-electron-service/package.json'
+        VERSION=$(jq -r '.version' "${PKG_JSON}")
+        echo "version=${VERSION}" >>"${GITHUB_OUTPUT}"
+        echo "Current package version: ${VERSION}"

@@ -49,7 +49,7 @@ jobs:
   # Calculate branch names and validate parameters
   calculate_branches:
     needs: [verify_repository]
-    uses: ./.github/workflows/release-modules/calculate-branches.yml
+    uses: ./.github/workflows/release-shared-calculate.yml
     with:
       branch: ${{ inputs.branch }}
       release_version: ${{ inputs.release_version }}
@@ -73,11 +73,10 @@ jobs:
   # Main release process
   release_tasks:
     needs: ['calculate_branches', 'setup', 'build_verify']
-    uses: ./.github/workflows/release-modules/release-tasks.yml
+    uses: ./.github/workflows/release-shared-publish.yml
     with:
       target_branch: ${{ needs.calculate_branches.outputs.target_branch }}
       next_lts_branch: ${{ needs.calculate_branches.outputs.next_lts_branch }}
-      package_version: ${{ needs.setup.outputs.package_version }}
       release_version: ${{ inputs.release_version }}
       dry_run: ${{ inputs.dry_run }}
     secrets:
