@@ -142,7 +142,7 @@ jobs:
               if [[ "$pkg_json" != *"node_modules"* ]]; then
                 PKG_NAME=$(jq -r '.name' "$pkg_json")
                 if [[ "$PKG_NAME" == @wdio/* ]]; then
-                  echo "  - $PKG_NAME@${{ env.NEW_VERSION }}"
+                  echo "  - $PKG_NAME@${NEW_VERSION}"
                   PACKAGES+=("$PKG_NAME")
                 fi
               fi
@@ -168,7 +168,7 @@ jobs:
               if [[ "$pkg_json" != *"node_modules"* ]]; then
                 PKG_NAME=$(jq -r '.name' "$pkg_json")
                 if [[ "$PKG_NAME" == @wdio/* ]]; then
-                  echo "  - $PKG_NAME@${{ env.NEW_VERSION }}"
+                  echo "  - $PKG_NAME@${NEW_VERSION}"
                   PACKAGES+=("$PKG_NAME")
                 fi
               fi
@@ -214,7 +214,7 @@ jobs:
         shell: bash
         run: |
           if [[ "${{ inputs.dry_run }}" == "true" ]]; then
-            RELEASE_TAG="v${{ env.NEW_VERSION }}"
+            RELEASE_TAG="v${NEW_VERSION}"
             echo "DRY RUN: Would push tags and commits to remote repository"
             echo "DRY RUN: Would push tag $RELEASE_TAG"
             echo "DRY RUN: Would push branch ${{ inputs.target_branch }}"
@@ -249,7 +249,7 @@ jobs:
       - name: 📋 Log GitHub Release (dry run only)
         if: ${{ inputs.dry_run }}
         run: |
-          RELEASE_TAG="v${{ env.NEW_VERSION }}"
+          RELEASE_TAG="v${NEW_VERSION}"
           echo "DRY RUN: Would create a GitHub release with:"
           echo "  - Tag name: $RELEASE_TAG"
           echo "  - Draft: true"
