@@ -44,7 +44,7 @@ jobs:
         if: ${{ github.repository != 'webdriverio-community/wdio-electron-service' }}
         run: |
           echo "::error::This workflow can only be run in the official repository (webdriverio-community/wdio-electron-service)"
-          exit 1
+          exit 0
 
   # Calculate branch names and validate parameters
   calculate_branches:
