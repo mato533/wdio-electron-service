@@ -3,6 +3,8 @@ import url from 'node:url';
 import fs from 'node:fs';
 import process from 'node:process';
 
+import shelljs from 'shelljs';
+
 import { startWdioSession } from 'wdio-electron-service';
 import type { NormalizedPackageJson } from 'read-package-up';
 
@@ -15,9 +17,13 @@ const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
 const packageJsonPath = path.join(__dirname, '..', '..', '..', 'apps', exampleDir, 'package.json');
 const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, { encoding: 'utf-8' })) as NormalizedPackageJson;
 const pkg = { packageJson, path: packageJsonPath };
-const electronVersion = getElectronVersion(pkg);
+const electronVersion = await getElectronVersion(pkg);
 const appBuildInfo = await getAppBuildInfo(pkg);
 const appBinaryPath = await getBinaryPath(packageJsonPath, appBuildInfo, electronVersion);
+
+const logDir = path.join(__dirname, '..', '..', `wdio-logs-${exampleDir}`);
+shelljs.mkdir('-p', logDir);
+process.env.WDIO_LOG_PATH = path.join(logDir, 'wdio-standalone.log');
 
 const browser = await startWdioSession([
   {
