@@ -36,17 +36,17 @@ describe('ServiceConfig', () => {
       ['cdpBridgeTimeout', 'timeout', 10],
       ['cdpBridgeWaitInterval', 'waitInterval', 20],
       ['cdpBridgeRetryCount', 'connectionRetryCount', 30],
+      ['useCdpBridge', null, false],
     ] as const)('should set the value only when set in the globalOptions - %s', (option, internalOption, expected) => {
       const globalOptions = {
         [option]: expected,
       };
       const config = new MockServiceConfig(globalOptions, {});
-      expect(config.cdpOptions).toStrictEqual({ [internalOption]: expected });
-    });
-
-    it('should set useCdpBridge to false when passed as a globalOptions', () => {
-      const config = new MockServiceConfig({ useCdpBridge: false }, {});
-      expect(config.useCdpBridge).toBe(false);
+      if (internalOption) {
+        expect(config.cdpOptions).toStrictEqual({ [internalOption]: expected });
+      } else {
+        expect(config[option]).toBe(expected);
+      }
     });
 
     it('should set and return the globalOptions', () => {
